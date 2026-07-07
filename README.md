@@ -1,2 +1,2 @@
-# esusu
-Collective contribution and personal target contribution application 
+Periscope Dashboard.
+Client interface for Internal Ops Platform
