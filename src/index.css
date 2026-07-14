@@ -1,0 +1,80 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * { box-sizing: border-box; }
+  html { font-family: 'Inter', system-ui, sans-serif; }
+  body { background-color: #F7F8FA; color: #0F172A; -webkit-font-smoothing: antialiased; }
+
+  /* Tabular numerals for data */
+  .tabular { font-variant-numeric: tabular-nums; }
+
+  /* Hide number spinners */
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type=number] { -moz-appearance: textfield; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #E5E7EB; border-radius: 9999px; }
+  ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+}
+
+@layer components {
+  /* Shimmer skeleton */
+  .skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+    border-radius: 6px;
+  }
+
+  /* Card */
+  .card {
+    @apply bg-surface-container-lowest border border-outline rounded-xl shadow-card;
+  }
+
+  /* Btn primary */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-4 h-9 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary-hover transition-colors focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  /* Btn secondary */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-4 h-9 rounded-lg bg-white border border-outline text-on-surface text-sm font-medium hover:bg-surface-container-low transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20;
+  }
+
+  /* Btn ghost */
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-3 h-9 rounded-lg text-on-surface-variant text-sm font-medium hover:bg-surface-container-low transition-colors focus:outline-none;
+  }
+
+  /* Btn destructive */
+  .btn-destructive {
+    @apply inline-flex items-center justify-center gap-2 px-4 h-9 rounded-lg bg-danger text-white text-sm font-medium hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-danger/40;
+  }
+
+  /* Input */
+  .input {
+    @apply w-full h-9 px-3 rounded-lg border border-outline bg-white text-sm text-on-surface placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors;
+  }
+
+  /* Status badge */
+  .badge-active   { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-success-bg text-success; }
+  .badge-inactive { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-surface-container text-muted; }
+  .badge-suspended{ @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-warning-bg text-warning; }
+  .badge-healthy  { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-success-bg text-success; }
+  .badge-degraded { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-warning-bg text-warning; }
+  .badge-down     { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-danger-bg text-danger; }
+  .badge-past-due { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-warning-bg text-warning; }
+  .badge-cancelled{ @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-surface-container text-muted; }
+  .badge-trialing { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-info-bg text-info; }
+
+  /* Table */
+  .table-header { @apply text-xs font-semibold uppercase tracking-wider text-on-surface-variant bg-surface-container-low; }
+  .table-row    { @apply h-11 border-b border-outline hover:bg-surface-container-low/50 transition-colors cursor-pointer; }
+  .table-cell   { @apply px-4 py-0 text-sm text-on-surface; }
+}
