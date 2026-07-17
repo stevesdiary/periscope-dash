@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Download, TrendingUp, TrendingDown } from 'lucide-react';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { AppTag } from '../components/ui/AppTag';
 import { MOCK_MRR_TREND, MOCK_SUBSCRIPTIONS } from '../lib/mockData';
+import { api } from '../api/client';
 import { PRODUCT_COLORS } from '../types';
+import type { SubscriptionRecord } from '../types';
 import { clsx } from 'clsx';
 
 const PLAN_DATA = [
@@ -30,8 +32,17 @@ type SubFilter = 'all' | 'active' | 'past_due' | 'cancelled' | 'trialing';
 export function RevenuePage() {
   const [range, setRange] = useState<Range>('30d');
   const [subFilter, setSubFilter] = useState<SubFilter>('all');
+  const [allSubs, setAllSubs] = useState<SubscriptionRecord[]>(MOCK_SUBSCRIPTIONS);
+  const [kpi, setKpi] = useState<{ mrr: number; arr: number; failed: number } | null>(null);
 
-  const subs = subFilter === 'all' ? MOCK_SUBSCRIPTIONS : MOCK_SUBSCRIPTIONS.filter(s => s.status === subFilter);
+  useEffect(() => {
+    api.getSubscriptions().then(setAllSubs).catch(() => { /* keep mock */ });
+    Promise.all([api.getSubscriptionsSummary(), api.getDashboard()])
+      .then(([s, d]) => setKpi({ mrr: s.mrr, arr: s.arr, failed: d.kpis.failedPayments }))
+      .catch(() => { /* keep static */ });
+  }, []);
+
+  const subs = subFilter === 'all' ? allSubs : allSubs.filter(s => s.status === subFilter);
 
   return (
     <div className="p-6 space-y-6 max-w-[1400px] mx-auto">
@@ -58,10 +69,10 @@ export function RevenuePage() {
       {/* KPI row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'MRR', value: '$120,000', delta: { v: '6.4%', pos: true } },
-          { label: 'ARR', value: '$1.44M', delta: null },
+          { label: 'MRR', value: kpi ? `$${kpi.mrr.toLocaleString()}` : '$120,000', delta: { v: '6.4%', pos: true } },
+          { label: 'ARR', value: kpi ? `$${Math.round(kpi.arr).toLocaleString()}` : '$1.44M', delta: null },
           { label: 'Net new MRR', value: '$7,200', delta: { v: '12%', pos: true } },
-          { label: 'Failed payments', value: '8', delta: { v: '2', pos: false }, danger: true },
+          { label: 'Failed payments', value: kpi ? String(kpi.failed) : '8', delta: { v: '2', pos: false }, danger: true },
         ].map(({ label, value, delta, danger }) => (
           <div key={label} className={clsx('card p-4', danger && 'border-danger/30 bg-danger-bg/20')}>
             <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-2">{label}</p>

@@ -1,12 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { RefreshCw, AlertTriangle, CheckCircle, XCircle, BellOff } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { MOCK_LATENCY_TREND } from '../lib/mockData';
+import { api } from '../api/client';
 import { PRODUCT_COLORS } from '../types';
 import { clsx } from 'clsx';
 
-const SERVICES = [
+type Service = {
+  key: string; name: string; status: string; uptime: string;
+  latency: number | null; errorRate: string; failedPayments: number | null; lastSeen?: string;
+};
+
+const SERVICES: Service[] = [
   { key: 'gateway', name: 'Periscope Gateway', status: 'healthy', uptime: '99.98%', latency: 38, errorRate: '0.01%', failedPayments: null },
   { key: 'estate', name: 'Estate', status: 'healthy', uptime: '99.95%', latency: 142, errorRate: '0.2%', failedPayments: 3 },
   { key: 'logistics', name: 'Logistics', status: 'healthy', uptime: '99.97%', latency: 148, errorRate: '0.1%', failedPayments: 5 },
@@ -20,11 +26,42 @@ const ALERTS = [
   { id: 'a2', title: 'Logistics failed payments above threshold', severity: 'warning', time: '22m ago', acknowledged: false },
 ];
 
+const pct = (n: number) => `${(n * 100).toFixed(2)}%`;
+
 export function SystemHealthPage() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [alerts, setAlerts] = useState(ALERTS);
+  const [services, setServices] = useState<Service[]>(SERVICES);
 
-  const overallStatus = SERVICES.some(s => s.status === 'down') ? 'degraded' : 'healthy';
+  useEffect(() => {
+    Promise.all([api.getDashboard(), api.getMetrics().catch(() => null)])
+      .then(([dash, metrics]) => {
+        const gateway: Service = {
+          key: 'gateway',
+          name: 'Periscope Gateway',
+          status: metrics ? (dash.kpis.systemHealth) : 'healthy',
+          uptime: metrics ? pct(metrics.uptime) : '—',
+          latency: metrics ? Math.round(metrics.avgResponseTimeMs) : null,
+          errorRate: metrics && metrics.requestCount > 0
+            ? pct(metrics.errorCount / metrics.requestCount) : '—',
+          failedPayments: null,
+        };
+        const apps: Service[] = dash.applications.map(a => ({
+          key: a.key,
+          name: a.name,
+          status: a.systemHealth,
+          uptime: '—',
+          latency: a.systemHealth === 'down' ? null : Math.round(a.avgResponseTimeMs),
+          errorRate: '—',
+          failedPayments: a.failedPayments ?? null,
+          lastSeen: a.systemHealth === 'down' ? 'just now' : undefined,
+        }));
+        setServices([gateway, ...apps]);
+      })
+      .catch(() => { /* keep mock */ });
+  }, []);
+
+  const overallStatus = services.some(s => s.status === 'down') ? 'degraded' : 'healthy';
 
   const acknowledge = (id: string) => setAlerts(a => a.map(x => x.id === id ? { ...x, acknowledged: true } : x));
 
@@ -50,7 +87,7 @@ export function SystemHealthPage() {
 
       {/* Status grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {SERVICES.map(svc => (
+        {services.map(svc => (
           <div key={svc.key} className={clsx('card p-4', svc.status === 'down' && 'border-danger/30 bg-danger-bg/10')}>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
