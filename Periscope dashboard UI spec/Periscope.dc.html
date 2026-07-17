@@ -1,0 +1,1523 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body { font-family: 'Inter', system-ui, sans-serif; color: #0F172A; -webkit-font-smoothing: antialiased; background: #F7F8FA; }
+  a { color: #4F46E5; text-decoration: none; }
+  a:hover { color: #4338CA; text-decoration: underline; }
+  *:focus-visible { outline: 2px solid rgba(79,70,229,.40); outline-offset: 1px; }
+  input, button, select { font-family: inherit; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-thumb { background: #E2E5EA; border-radius: 8px; border: 2px solid #F7F8FA; }
+  ::-webkit-scrollbar-thumb:hover { background: #CBD2DA; }
+  @keyframes psShimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+  @keyframes psSpin { to { transform: rotate(360deg); } }
+  @keyframes psFade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+  @keyframes psSlideIn { from { transform: translateX(100%); } to { transform: none; } }
+  @keyframes psToastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  @keyframes psPulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+  /* ---- responsive: grids stack, tables scroll (breakpoint mirrors JS mobile = vw < 820) ---- */
+  @media (max-width: 819px) {
+    [data-r="col2"] { grid-template-columns: 1fr !important; }
+    [data-r="k4"], [data-r="k5"] { grid-template-columns: repeat(2, 1fr) !important; }
+    [data-r="authside"] { display: none !important; }
+    [style*="overflow: hidden"]:has(> [style*="display: grid"]) { overflow-x: auto !important; overflow-y: visible !important; }
+    [style*="overflow: hidden"]:has(> [style*="display: grid"]) > * { min-width: 560px; }
+  }
+  @media (max-width: 520px) {
+    [data-r="k4"] { grid-template-columns: 1fr !important; }
+  }
+</style>
+</helmet>
+
+<div style="height:100vh;width:100%;overflow:hidden;background:#F7F8FA;font-variant-numeric:tabular-nums">
+
+  <!-- ============ AUTH: LOGIN ============ -->
+  <sc-if value="{{ isLogin }}" hint-placeholder-val="{{ true }}">
+    <div style="height:100vh;display:flex">
+      <div data-r="authside" style="flex:0 0 55%;background:linear-gradient(135deg,#EEF2FF 0%,#F7F8FA 60%,#FFFFFF 100%);display:flex;flex-direction:column;justify-content:center;padding:0 72px;position:relative">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:56px">{{ apertureMark }}<span style="font-size:20px;font-weight:700;letter-spacing:-.02em">Periscope</span></div>
+        <div style="font-size:44px;font-weight:600;line-height:1.1;letter-spacing:-.02em;max-width:520px;color:#0F172A">One command center for the whole portfolio</div>
+        <div style="font-size:16px;color:#475569;margin-top:20px;max-width:440px;line-height:1.6">Revenue, businesses, users, subscriptions and system health across Estate, School, Hospital, Logistics and esusu — in one place.</div>
+        <div style="display:flex;gap:18px;margin-top:40px;align-items:center">
+          <sc-for list="{{ productDots }}" as="p" hint-placeholder-count="5">
+            <div style="display:flex;align-items:center;gap:7px"><span style="width:9px;height:9px;border-radius:50%;background:{{ p.color }};opacity:.55"></span><span style="font-size:12px;color:#94A3B8;font-weight:500">{{ p.name }}</span></div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:32px;background:#FFFFFF">
+        <div style="width:100%;max-width:400px;animation:psFade .4s ease">
+          <div style="font-size:24px;font-weight:600;letter-spacing:-.01em">Sign in to Periscope</div>
+          <div style="font-size:14px;color:#94A3B8;margin-top:6px">Internal access only</div>
+          <sc-if value="{{ loginError }}" hint-placeholder-val="{{ false }}">
+            <div style="margin-top:20px;background:#FEE2E2;border:1px solid #FCA5A5;color:#B91C1C;font-size:13px;padding:10px 12px;border-radius:8px">Invalid email or password.</div>
+          </sc-if>
+          <div style="margin-top:24px">
+            <label style="font-size:12px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:#94A3B8">Work email</label>
+            <input value="{{ loginEmail }}" onChange="{{ onLoginEmail }}" placeholder="you@periscope.local" style="width:100%;margin-top:7px;height:42px;padding:0 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px;color:#0F172A" />
+          </div>
+          <div style="margin-top:16px">
+            <label style="font-size:12px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;color:#94A3B8">Password</label>
+            <div style="position:relative;margin-top:7px">
+              <input value="{{ loginPass }}" onChange="{{ onLoginPass }}" type="{{ passType }}" placeholder="••••••••" style="width:100%;height:42px;padding:0 44px 0 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:14px" />
+              <button onClick="{{ togglePass }}" style="position:absolute;right:4px;top:4px;height:34px;width:34px;border:none;background:transparent;color:#94A3B8;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:6px">{{ eyeIcon }}</button>
+            </div>
+          </div>
+          <button onClick="{{ doContinue }}" style="width:100%;height:44px;margin-top:24px;background:#4F46E5;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Continue</button>
+          <div style="text-align:center;margin-top:14px"><button style="background:none;border:none;color:#64748B;font-size:13px;cursor:pointer">Forgot password?</button></div>
+          <div style="text-align:center;margin-top:40px;font-size:12px;color:#94A3B8;display:flex;align-items:center;justify-content:center;gap:6px">{{ shieldMini }} Protected by two-factor authentication</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ AUTH: 2FA VERIFY ============ -->
+  <sc-if value="{{ is2fa }}" hint-placeholder-val="{{ false }}">
+    <div style="height:100vh;display:flex;align-items:center;justify-content:center;padding:32px">
+      <div style="width:100%;max-width:420px;animation:psFade .4s ease">
+        <div style="width:52px;height:52px;border-radius:12px;background:#EEF2FF;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;color:#4F46E5">{{ shieldIcon }}</div>
+        <div style="text-align:center;font-size:22px;font-weight:600;letter-spacing:-.01em">Enter your verification code</div>
+        <div style="text-align:center;font-size:14px;color:#64748B;margin-top:8px;line-height:1.55">Open your authenticator app and enter the 6-digit code for Periscope IOP.</div>
+        <sc-if value="{{ mfaError }}" hint-placeholder-val="{{ false }}">
+          <div style="text-align:center;color:#DC2626;font-size:13px;margin-top:18px">Incorrect or expired code. Try again.</div>
+        </sc-if>
+        <div style="margin-top:24px">{{ codeInput }}</div>
+        <div style="text-align:center;font-size:12px;color:#94A3B8;margin-top:14px">This challenge expires in {{ mfaCountdown }}</div>
+        <button onClick="{{ doVerify }}" style="width:100%;height:44px;margin-top:20px;background:#4F46E5;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Verify</button>
+        <div style="text-align:center;margin-top:16px;display:flex;flex-direction:column;gap:10px">
+          <button style="background:none;border:none;color:#64748B;font-size:13px;cursor:pointer">Use a recovery code instead</button>
+          <button onClick="{{ backToLogin }}" style="background:none;border:none;color:#94A3B8;font-size:13px;cursor:pointer">Back to sign in</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ APP SHELL ============ -->
+  <sc-if value="{{ showApp }}" hint-placeholder-val="{{ false }}">
+    <div style="height:100vh;display:flex;overflow:hidden;position:relative">
+      <!-- MOBILE SCRIM -->
+      <sc-if value="{{ mobileNavOpen }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ closeMobileNav }}" style="position:fixed;inset:0;background:rgba(15,23,42,.4);z-index:80;animation:psFade .2s ease"></div>
+      </sc-if>
+      <!-- SIDEBAR -->
+      <aside style="{{ asideStyle }}">
+        <div style="height:56px;display:flex;align-items:center;gap:10px;padding:0 16px;border-bottom:1px solid #F1F3F6;flex-shrink:0">{{ apertureMarkSm }}<span style="font-size:16px;font-weight:700;letter-spacing:-.02em;white-space:nowrap;opacity:{{ labelOpacity }}">Periscope</span><div style="flex:1"></div><sc-if value="{{ showHamburger }}" hint-placeholder-val="{{ false }}"><button onClick="{{ closeMobileNav }}" style="width:32px;height:32px;border:none;background:transparent;color:#94A3B8;cursor:pointer;display:flex;align-items:center;justify-content:center">{{ colClose }}</button></sc-if></div>
+        <div style="flex:1;overflow-y:auto;padding:14px 10px">
+          <sc-for list="{{ navSections }}" as="sec" hint-placeholder-count="4">
+            <div style="font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:#B4BCC7;padding:12px 10px 6px;white-space:nowrap;opacity:{{ labelOpacity }}">{{ sec.group }}</div>
+            <sc-for list="{{ sec.items }}" as="it" hint-placeholder-count="3">
+              <div onClick="{{ it.go }}" title="{{ it.label }}" style="{{ it.rowStyle }}">
+                <span style="flex-shrink:0;display:flex;color:{{ it.iconColor }}">{{ it.icon }}</span>
+                <span style="white-space:nowrap;overflow:hidden;opacity:{{ labelOpacity }}">{{ it.label }}</span>
+              </div>
+            </sc-for>
+          </sc-for>
+        </div>
+        <sc-if value="{{ showCollapseBtn }}" hint-placeholder-val="{{ true }}"><div onClick="{{ toggleSidebar }}" style="height:44px;border-top:1px solid #F1F3F6;display:flex;align-items:center;gap:10px;padding:0 16px;color:#94A3B8;cursor:pointer;font-size:13px;flex-shrink:0">{{ collapseIcon }}<span style="white-space:nowrap;opacity:{{ labelOpacity }}">Collapse</span></div></sc-if>
+      </aside>
+
+      <!-- MAIN COLUMN -->
+      <div style="flex:1;display:flex;flex-direction:column;min-width:0">
+        <!-- TOPBAR -->
+        <header style="height:56px;flex-shrink:0;background:#FFFFFF;border-bottom:1px solid #E5E7EB;display:flex;align-items:center;padding:0 14px;gap:12px">
+          <sc-if value="{{ showHamburger }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ toggleMobileNav }}" style="width:38px;height:38px;border:1px solid #E5E7EB;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;color:#475569;cursor:pointer;flex-shrink:0">{{ hamburgerIcon }}</button>
+          </sc-if>
+          <sc-if value="{{ showSearch }}" hint-placeholder-val="{{ true }}">
+            <div style="position:relative;flex:0 1 320px;max-width:320px">
+              <span style="position:absolute;left:11px;top:9px;color:#B4BCC7">{{ searchIcon }}</span>
+              <input placeholder="Search businesses, users…" style="width:100%;height:36px;padding:0 12px 0 34px;border:1px solid #E5E7EB;border-radius:8px;background:#F7F8FA;font-size:13px" />
+            </div>
+          </sc-if>
+          <div style="flex:1"></div>
+          <sc-if value="{{ showRoleSwitch }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;align-items:center;gap:8px;background:#F1F3F6;border-radius:8px;padding:3px">
+              <sc-for list="{{ roleOptions }}" as="r" hint-placeholder-count="3">
+                <button onClick="{{ r.pick }}" style="{{ r.style }}">{{ r.label }}</button>
+              </sc-for>
+            </div>
+          </sc-if>
+          <button onClick="{{ goActivity }}" title="Activity" style="position:relative;width:36px;height:36px;border:1px solid #E5E7EB;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;color:#64748B;cursor:pointer"><span style="width:7px;height:7px;border-radius:50%;background:#16A34A;position:absolute;top:8px;right:8px;animation:psPulse 2s infinite"></span>{{ activityIcon }}</button>
+          <button onClick="{{ goNotifications }}" title="Notifications" style="position:relative;width:36px;height:36px;border:1px solid #E5E7EB;border-radius:8px;background:#fff;display:flex;align-items:center;justify-content:center;color:#64748B;cursor:pointer">{{ bellIcon }}<sc-if value="{{ hasUnread }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;top:-5px;right:-5px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:#DC2626;color:#fff;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center">{{ unreadCount }}</span></sc-if></button>
+          <div style="width:1px;height:24px;background:#E5E7EB"></div>
+          <div style="display:flex;align-items:center;gap:9px">
+            <div style="width:32px;height:32px;border-radius:50%;background:#4F46E5;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0">{{ userInitials }}</div>
+            <sc-if value="{{ showUserMeta }}" hint-placeholder-val="{{ true }}"><div style="line-height:1.2"><div style="font-size:13px;font-weight:600">{{ userName }}</div><div style="font-size:11px;color:#94A3B8">{{ roleLabel }}</div></div></sc-if>
+          </div>
+        </header>
+
+        <!-- IMPERSONATION BANNER -->
+        <sc-if value="{{ impersonating }}" hint-placeholder-val="{{ false }}">
+          <div style="flex-shrink:0;background:repeating-linear-gradient(45deg,#7C3AED,#7C3AED 12px,#6D28D9 12px,#6D28D9 24px);color:#fff;display:flex;align-items:center;gap:12px;padding:0 16px;min-height:44px;flex-wrap:wrap;box-shadow:inset 0 -1px 0 rgba(0,0,0,.12)">
+            <span style="display:flex;flex-shrink:0">{{ eyeBannerIcon }}</span>
+            <div style="font-size:13px;font-weight:600;flex:1;min-width:120px">Viewing as <b>{{ impersonateTarget }}</b> — read-only</div>
+            <span style="font-size:11px;font-weight:600;background:rgba(255,255,255,.22);padding:3px 9px;border-radius:999px;font-variant-numeric:tabular-nums;flex-shrink:0">Expires in {{ impersonateCountdown }}</span>
+            <button onClick="{{ exitImpersonation }}" style="height:30px;padding:0 14px;border:1px solid rgba(255,255,255,.5);background:rgba(255,255,255,.12);color:#fff;border-radius:7px;font-size:12.5px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;flex-shrink:0">{{ exitBannerIcon }} Exit</button>
+          </div>
+        </sc-if>
+
+        <!-- CONTENT -->
+        <main style="flex:1;overflow-y:auto;padding:{{ mainPad }}">
+
+          <!-- SKELETON -->
+          <sc-if value="{{ loading }}" hint-placeholder-val="{{ true }}">{{ skeleton }}</sc-if>
+
+          <sc-if value="{{ contentReady }}" hint-placeholder-val="{{ false }}">
+
+            <!-- 403 FORBIDDEN -->
+            <sc-if value="{{ forbidden }}" hint-placeholder-val="{{ false }}">
+              <div style="max-width:440px;margin:80px auto;text-align:center;animation:psFade .3s ease">
+                <div style="width:56px;height:56px;border-radius:14px;background:#FEE2E2;color:#DC2626;display:flex;align-items:center;justify-content:center;margin:0 auto 20px">{{ lockIcon }}</div>
+                <div style="font-size:20px;font-weight:600">You don't have access to this</div>
+                <div style="font-size:14px;color:#64748B;margin-top:10px;line-height:1.6">Your role (<b style="color:#0F172A">{{ roleLabel }}</b>) doesn't include the permission required for this page (<code style="font-family:'JetBrains Mono',monospace;background:#F1F3F6;padding:1px 6px;border-radius:5px;font-size:12px">{{ neededPerm }}</code>). Contact a super-admin if you need access.</div>
+                <button onClick="{{ goBusinesses }}" style="margin-top:24px;height:40px;padding:0 18px;background:#4F46E5;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">Back to Businesses</button>
+              </div>
+            </sc-if>
+
+            <!-- SCREENS -->
+            <sc-if value="{{ allowed }}" hint-placeholder-val="{{ true }}">
+
+              <!-- DASHBOARD -->
+              <sc-if value="{{ isDashboard }}" hint-placeholder-val="{{ true }}">
+                <div style="animation:psFade .3s ease">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+                    <div>
+                      <div style="font-size:28px;font-weight:600;letter-spacing:-.01em">Dashboard</div>
+                      <div style="font-size:13px;color:#94A3B8;margin-top:4px">Updated {{ updatedRel }} · aggregated across {{ appCount }} products</div>
+                    </div>
+                    <div style="display:flex;gap:10px;align-items:center">
+                      <div style="display:flex;background:#F1F3F6;border-radius:8px;padding:3px">
+                        <sc-for list="{{ rangeOptions }}" as="rg" hint-placeholder-count="3"><button onClick="{{ rg.pick }}" style="{{ rg.style }}">{{ rg.label }}</button></sc-for>
+                      </div>
+                      <button onClick="{{ refreshDash }}" style="height:34px;padding:0 12px;border:1px solid #E5E7EB;background:#fff;border-radius:8px;font-size:13px;color:#475569;cursor:pointer;display:flex;align-items:center;gap:6px">{{ refreshIcon }} Refresh</button>
+                    </div>
+                  </div>
+
+                  <sc-if value="{{ healthDegraded }}" hint-placeholder-val="{{ true }}">
+                    <div style="margin-top:18px;background:#FEF3C7;border:1px solid #FCD34D;border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:12px">
+                      <span style="color:#B45309">{{ alertIcon }}</span>
+                      <div style="flex:1;font-size:13px;color:#92400E"><b>System degraded</b> — {{ degradedMsg }}</div>
+                      <a href="javascript:void(0)" onClick="{{ goHealth }}" style="font-size:13px;font-weight:600;color:#B45309">View System Health →</a>
+                    </div>
+                  </sc-if>
+
+                  <div data-r="k4" style="margin-top:20px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+                    <sc-for list="{{ kpiCards }}" as="k" hint-placeholder-count="8">
+                      <div style="{{ k.cardStyle }}">
+                        <div style="font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8">{{ k.label }}</div>
+                        <div style="display:flex;align-items:flex-end;justify-content:space-between;margin-top:10px;gap:8px">
+                          <div style="font-size:24px;font-weight:600;letter-spacing:-.01em;color:{{ k.valueColor }}">{{ k.value }}</div>
+                          <sc-if value="{{ k.hasSpark }}" hint-placeholder-val="{{ false }}"><div style="flex-shrink:0">{{ k.spark }}</div></sc-if>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px;margin-top:8px;min-height:18px">
+                          <sc-if value="{{ k.hasDelta }}" hint-placeholder-val="{{ false }}"><span style="{{ k.deltaStyle }}">{{ k.delta }}</span></sc-if>
+                          <sc-if value="{{ k.hasSub }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;color:#94A3B8">{{ k.sub }}</span></sc-if>
+                        </div>
+                      </div>
+                    </sc-for>
+                  </div>
+
+                  <div data-r="col2" style="margin-top:16px;display:grid;grid-template-columns:2fr 1fr;gap:14px">
+                    <div style="background:#FFFFFF;border:1px solid #E5E7EB;border-radius:12px;box-shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.10);padding:20px">
+                      <div style="display:flex;justify-content:space-between;align-items:baseline">
+                        <div><div style="font-size:15px;font-weight:600">MRR trend</div><div style="font-size:12px;color:#94A3B8;margin-top:2px">Last 12 months · sample data</div></div>
+                        <div style="font-size:22px;font-weight:600">{{ mrrTotal }}</div>
+                      </div>
+                      <div style="margin-top:16px">{{ mrrChart }}</div>
+                    </div>
+                    <div style="background:#FFFFFF;border:1px solid #E5E7EB;border-radius:12px;box-shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.10);padding:20px">
+                      <div style="font-size:15px;font-weight:600">Revenue mix</div>
+                      <div style="font-size:12px;color:#94A3B8;margin-top:2px">MRR share by product</div>
+                      <div style="display:flex;align-items:center;gap:16px;margin-top:14px">{{ mixDonut }}<div style="flex:1;display:flex;flex-direction:column;gap:9px">
+                        <sc-for list="{{ mixLegend }}" as="m" hint-placeholder-count="4"><div style="display:flex;align-items:center;gap:8px;font-size:12px"><span style="width:9px;height:9px;border-radius:2px;background:{{ m.color }}"></span><span style="flex:1;color:#475569">{{ m.name }}</span><span style="font-weight:600">{{ m.pct }}</span></div></sc-for>
+                      </div></div>
+                    </div>
+                  </div>
+
+                  <div style="margin-top:20px;display:flex;align-items:center;justify-content:space-between">
+                    <div style="font-size:16px;font-weight:600">By product</div>
+                    <a href="javascript:void(0)" onClick="{{ goHealth }}" style="font-size:13px;color:#4F46E5">System health →</a>
+                  </div>
+                  <div style="margin-top:12px;display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px">
+                    <sc-for list="{{ productCards }}" as="p" hint-placeholder-count="5">
+                      <div style="{{ p.cardStyle }}">
+                        <div style="display:flex;align-items:center;justify-content:space-between">
+                          <div style="display:flex;align-items:center;gap:8px"><span style="width:10px;height:10px;border-radius:50%;background:{{ p.color }}"></span><span style="font-weight:600;font-size:15px">{{ p.name }}</span></div>
+                          <span style="{{ p.badgeStyle }}">{{ p.badge }}</span>
+                        </div>
+                        <sc-if value="{{ p.unavailable }}" hint-placeholder-val="{{ false }}">
+                          <div style="margin-top:16px;text-align:center;padding:8px 0">
+                            <div style="display:inline-block;font-size:11px;font-weight:600;background:#F1F3F6;color:#94A3B8;padding:4px 10px;border-radius:999px">Data unavailable</div>
+                            <div><button style="margin-top:12px;background:none;border:none;color:#4F46E5;font-size:12px;font-weight:600;cursor:pointer">Retry</button></div>
+                          </div>
+                        </sc-if>
+                        <sc-if value="{{ p.available }}" hint-placeholder-val="{{ true }}">
+                          <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr;gap:12px 10px">
+                            <div><div style="font-size:11px;color:#94A3B8">Businesses</div><div style="font-size:15px;font-weight:600;margin-top:2px">{{ p.businesses }}</div></div>
+                            <div><div style="font-size:11px;color:#94A3B8">Users</div><div style="font-size:15px;font-weight:600;margin-top:2px">{{ p.users }}</div></div>
+                            <div><div style="font-size:11px;color:#94A3B8">MRR</div><div style="font-size:15px;font-weight:600;margin-top:2px">{{ p.mrr }}</div></div>
+                            <div><div style="font-size:11px;color:#94A3B8">Avg latency</div><div style="font-size:15px;font-weight:600;margin-top:2px">{{ p.latency }}</div></div>
+                          </div>
+                        </sc-if>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-if>
+
+              <!-- ============ BUSINESSES LIST ============ -->
+              <sc-if value="{{ isBusinesses }}" hint-placeholder-val="{{ false }}">
+                <div style="animation:psFade .3s ease">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
+                    <div><div style="font-size:28px;font-weight:600;letter-spacing:-.01em">Businesses</div><div style="font-size:13px;color:#94A3B8;margin-top:4px">{{ bizCountLabel }}</div></div>
+                    <button onClick="{{ exportBiz }}" style="height:36px;padding:0 14px;border:1px solid #E5E7EB;background:#fff;border-radius:8px;font-size:13px;font-weight:500;color:#475569;cursor:pointer;display:flex;align-items:center;gap:7px">{{ downloadIcon }} Export CSV</button>
+                  </div>
+                  <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+                    <div style="position:relative;flex:0 1 280px"><span style="position:absolute;left:11px;top:9px;color:#B4BCC7">{{ searchIcon }}</span><input value="{{ bizQ }}" onChange="{{ onBizQ }}" placeholder="Search by name…" style="width:100%;height:36px;padding:0 12px 0 34px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px" /></div>
+                    <select value="{{ bizStatus }}" onChange="{{ onBizStatus }}" style="height:36px;padding:0 10px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;color:#475569;background:#fff">{{ bizStatusOpts }}</select>
+                    <select value="{{ bizApp }}" onChange="{{ onBizApp }}" style="height:36px;padding:0 10px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;color:#475569;background:#fff">{{ bizAppOpts }}</select>
+                    <div style="flex:1"></div>
+                    <select value="{{ bizSort }}" onChange="{{ onBizSort }}" style="height:36px;padding:0 10px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;color:#475569;background:#fff">{{ bizSortOpts }}</select>
+                  </div>
+                  <sc-if value="{{ bizEmpty }}" hint-placeholder-val="{{ false }}">{{ emptyState }}</sc-if>
+                  <sc-if value="{{ bizHasRows }}" hint-placeholder-val="{{ true }}">
+                    <div style="margin-top:16px;background:#fff;border:1px solid #E5E7EB;border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.10)">
+                      <div style="display:grid;grid-template-columns:2fr 1fr 1.4fr 1fr 0.8fr 40px;padding:0 18px;height:42px;align-items:center;background:#FAFBFC;border-bottom:1px solid #E5E7EB;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8">
+                        <div>Business</div><div>Status</div><div>Products</div><div style="text-align:right">MRR</div><div style="text-align:right">Users</div><div></div>
+                      </div>
+                      <sc-for list="{{ bizRows }}" as="b" hint-placeholder-count="8">
+                        <div onClick="{{ b.open }}" style="display:grid;grid-template-columns:2fr 1fr 1.4fr 1fr 0.8fr 40px;padding:0 18px;height:58px;align-items:center;border-bottom:1px solid #F1F3F6;cursor:pointer;font-size:13.5px" style-hover="background:#FAFBFC">
+                          <div style="display:flex;align-items:center;gap:11px;min-width:0"><div style="width:32px;height:32px;border-radius:8px;background:{{ b.avatarBg }};color:{{ b.avatarFg }};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0">{{ b.initials }}</div><div style="min-width:0"><div style="font-weight:600;color:#0F172A;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ b.name }}</div><div style="font-size:11px;color:#B4BCC7;font-family:'JetBrains Mono',monospace">{{ b.id }}</div></div></div>
+                          <div><span style="{{ b.statusStyle }}">{{ b.statusLabel }}</span></div>
+                          <div style="display:flex;gap:5px;flex-wrap:wrap">{{ b.chips }}</div>
+                          <div style="text-align:right;font-weight:600">{{ b.mrr }}</div>
+                          <div style="text-align:right;color:#475569">{{ b.users }}</div>
+                          <div style="text-align:right;color:#CBD2DA">{{ chevronIcon }}</div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-if>
+
+              <!-- ============ BUSINESS DETAIL ============ -->
+              <sc-if value="{{ isBusinessDetail }}" hint-placeholder-val="{{ false }}">
+                <div style="animation:psFade .3s ease;max-width:1000px">
+                  <button onClick="{{ goBusinesses }}" style="background:none;border:none;color:#64748B;font-size:13px;cursor:pointer;padding:0">← Businesses</button>
+                  <div style="margin-top:14px;display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
+                    <div style="display:flex;gap:16px;align-items:center">
+                      <div style="width:52px;height:52px;border-radius:12px;background:{{ bd.avatarBg }};color:{{ bd.avatarFg }};display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:600">{{ bd.initials }}</div>
+                      <div><div style="font-size:24px;font-weight:600;letter-spacing:-.01em">{{ bd.name }}</div><div style="display:flex;gap:10px;align-items:center;margin-top:5px"><span style="{{ bd.statusStyle }}">{{ bd.statusLabel }}</span><span style="font-size:12px;color:#B4BCC7;font-family:'JetBrains Mono',monospace">{{ bd.id }}</span></div></div>
+                    </div>
+                    <div style="display:flex;gap:8px">
+                      <button onClick="{{ bd.suspend }}" style="height:36px;padding:0 14px;border:1px solid #E5E7EB;background:#fff;border-radius:8px;font-size:13px;font-weight:500;color:#B45309;cursor:pointer">{{ bd.suspendLabel }}</button>
+                      <button onClick="{{ bd.impersonate }}" style="height:36px;padding:0 14px;border:1px solid #4F46E5;background:#4F46E5;color:#fff;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer">Impersonate owner</button>
+                    </div>
+                  </div>
+                  <div data-r="k4" style="margin-top:22px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+                    <sc-for list="{{ bd.stats }}" as="st" hint-placeholder-count="4"><div style="background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8">{{ st.label }}</div><div style="font-size:22px;font-weight:600;margin-top:8px">{{ st.value }}</div></div></sc-for>
+                  </div>
+                  <div data-r="col2" style="margin-top:16px;display:grid;grid-template-columns:1.4fr 1fr;gap:14px">
+                    <div style="background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:20px">
+                      <div style="font-size:15px;font-weight:600;margin-bottom:6px">Subscriptions</div>
+                      <sc-for list="{{ bd.subs }}" as="sub" hint-placeholder-count="2"><div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #F1F3F6"><div style="display:flex;align-items:center;gap:10px"><span style="width:8px;height:8px;border-radius:50%;background:{{ sub.color }}"></span><div><div style="font-weight:600;font-size:13px">{{ sub.appName }} · {{ sub.plan }}</div><div style="font-size:11px;color:#94A3B8">Renews {{ sub.renews }}</div></div></div><div style="display:flex;align-items:center;gap:12px"><span style="font-weight:600;font-size:13px">{{ sub.mrr }}</span><span style="{{ sub.statusStyle }}">{{ sub.statusLabel }}</span></div></div></sc-for>
+                    </div>
+                    <div style="background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:20px">
+                      <div style="font-size:15px;font-weight:600;margin-bottom:14px">Recent activity</div>
+                      <sc-for list="{{ bd.timeline }}" as="t" hint-placeholder-count="4"><div style="display:flex;gap:11px;padding-bottom:16px"><div style="display:flex;flex-direction:column;align-items:center"><span style="width:8px;height:8px;border-radius:50%;background:{{ t.dot }};margin-top:4px;flex-shrink:0"></span><span style="flex:1;width:1px;background:#F1F3F6;margin-top:3px"></span></div><div><div style="font-size:13px;color:#0F172A">{{ t.text }}</div><div style="font-size:11px;color:#B4BCC7;margin-top:2px">{{ t.time }}</div></div></div></sc-for>
+                    </div>
+                  </div>
+                </div>
+              </sc-if>
+
+              <!-- ============ REVENUE ============ -->
+              <sc-if value="{{ isRevenue }}" hint-placeholder-val="{{ false }}">
+                <div style="animation:psFade .3s ease">
+                  <div style="display:flex;align-items:flex-start;justify-content:space-between"><div><div style="font-size:28px;font-weight:600;letter-spacing:-.01em">Revenue</div><div style="font-size:13px;color:#94A3B8;margin-top:4px">All amounts in NGN · sample data</div></div><button onClick="{{ exportRev }}" style="height:36px;padding:0 14px;border:1px solid #E5E7EB;background:#fff;border-radius:8px;font-size:13px;font-weight:500;color:#475569;cursor:pointer;display:flex;align-items:center;gap:7px">{{ downloadIcon }} Export</button></div>
+                  <div data-r="k4" style="margin-top:20px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+                    <sc-for list="{{ revKpis }}" as="k" hint-placeholder-count="4"><div style="background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:18px;box-shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.10)"><div style="font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8">{{ k.label }}</div><div style="font-size:24px;font-weight:600;margin-top:10px">{{ k.value }}</div><div style="font-size:12px;color:#94A3B8;margin-top:6px">{{ k.sub }}</div></div></sc-for>
+                  </div>
+                  <div data-r="col2" style="margin-top:16px;display:grid;grid-template-columns:1.5fr 1fr;gap:14px">
+                    <div style="background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:20px"><div style="display:flex;justify-content:space-between;align-items:baseline"><div style="font-size:15px;font-weight:600">Revenue by product</div><div style="font-size:12px;color:#94A3B8">MTD</div></div><div style="margin-top:18px;display:flex;flex-direction:column;gap:16px">
+                      <sc-for list="{{ revBars }}" as="b" hint-placeholder-count="4"><div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span style="display:flex;align-items:center;gap:7px"><span style="width:9px;height:9px;border-radius:2px;background:{{ b.color }}"></span>{{ b.name }}</span><span style="font-weight:600">{{ b.value }}</span></div><div style="height:8px;background:#F1F3F6;border-radius:5px;overflow:hidden"><div style="height:100%;width:{{ b.pct }};background:{{ b.color }};border-radius:5px"></div></div></div></sc-for>
+                    </div></div>
+                    <div style="background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:20px"><div style="font-size:15px;font-weight:600">Reconciliation</div><div style="margin-top:10px;display:flex;flex-direction:column;gap:2px">
+                      <sc-for list="{{ revRecon }}" as="r" hint-placeholder-count="4"><div style="display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid #F1F3F6;font-size:13px"><span style="color:#64748B">{{ r.label }}</span><span style="font-weight:600;color:{{ r.color }}">{{ r.value }}</span></div></sc-for>
+                    </div></div>
+                  </div>
+                  <div style="margin-top:16px;background:#fff;border:1px solid #E5E7EB;border-radius:12px;overflow:hidden">
+                    <div style="padding:16px 20px;border-bottom:1px solid #F1F3F6;font-size:15px;font-weight:600">Per-product breakdown</div>
+                    <div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr 1fr;padding:0 20px;height:40px;align-items:center;background:#FAFBFC;border-bottom:1px solid #E5E7EB;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8"><div>Product</div><div style="text-align:right">Today</div><div style="text-align:right">MTD</div><div style="text-align:right">YTD</div><div style="text-align:right">Outstanding</div></div>
+                    <sc-for list="{{ revTable }}" as="r" hint-placeholder-count="4"><div style="display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr 1fr;padding:0 20px;height:52px;align-items:center;border-bottom:1px solid #F1F3F6;font-size:13.5px"><div style="display:flex;align-items:center;gap:8px;font-weight:600"><span style="width:9px;height:9px;border-radius:50%;background:{{ r.color }}"></span>{{ r.name }}</div><div style="text-align:right">{{ r.today }}</div><div style="text-align:right">{{ r.mtd }}</div><div style="text-align:right">{{ r.ytd }}</div><div style="text-align:right;color:#B45309">{{ r.outstanding }}</div></div></sc-for>
+                  </div>
+                </div>
+              </sc-if>
+
+              <!-- ============ SUBSCRIPTIONS ============ -->
+              <sc-if value="{{ isSubscriptions }}" hint-placeholder-val="{{ false }}">
+                <div style="animation:psFade .3s ease">
+                  <div style="font-size:28px;font-weight:600;letter-spacing:-.01em">Subscriptions</div><div style="font-size:13px;color:#94A3B8;margin-top:4px">{{ subSummaryLabel }}</div>
+                  <div data-r="k5" style="margin-top:20px;display:grid;grid-template-columns:repeat(5,1fr);gap:12px">
+                    <sc-for list="{{ subStatCards }}" as="c" hint-placeholder-count="5"><div style="background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:16px"><div style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#94A3B8">{{ c.label }}</div><div style="font-size:22px;font-weight:600;margin-top:8px;color:{{ c.color }}">{{ c.value }}</div></div></sc-for>
+                  </div>
+                  <div data-r="col2" style="margin-top:16px;display:grid;grid-template-columns:1fr 1.6fr;gap:14px">
+                    <div style="display:flex;flex-direction:column;gap:14px">
+                      <div style="background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:20px"><div style="font-size:15px;font-weight:600;margin-bottom:14px">By plan</div>
+                        <sc-for list="{{ planBreakdown }}" as="p" hint-placeholder-count="4"><div style="display:flex;justify-content:space-between;align-items:center;padding:9px 0;font-size:13px"><span style="font-weight:500">{{ p.plan }} <span style="color:#94A3B8;font-weight:400">· {{ p.count }}</span></span><span style="font-weight:600">{{ p.mrr }}</span></div></sc-for>
+                      </div>
+                      <div style="background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:20px"><div style="font-size:15px;font-weight:600;margin-bottom:12px">Upcoming renewals</div>
+                        <sc-for list="{{ upcomingRenewals }}" as="u" hint-placeholder-count="5"><div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #F1F3F6"><span style="width:8px;height:8px;border-radius:50%;background:{{ u.color }};flex-shrink:0"></span><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ u.name }}</div><div style="font-size:11px;color:#94A3B8">{{ u.plan }} · {{ u.mrr }}</div></div><div style="font-size:12px;color:#64748B;flex-shrink:0">{{ u.date }}</div></div></sc-for>
+                      </div>
+                    </div>
+                    <div style="background:#fff;border:1px solid #E5E7EB;border-radius:12px;overflow:hidden">
+                      <div style="padding:14px 18px;border-bottom:1px solid #F1F3F6;display:flex;align-items:center;justify-content:space-between"><div style="font-size:15px;font-weight:600">All subscriptions</div><select value="{{ subsStatus }}" onChange="{{ onSubsStatus }}" style="height:32px;padding:0 8px;border:1px solid #E5E7EB;border-radius:7px;font-size:12px;color:#475569;background:#fff">{{ subsStatusOpts }}</select></div>
+                      <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;padding:0 18px;height:38px;align-items:center;background:#FAFBFC;border-bottom:1px solid #E5E7EB;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8"><div>Business</div><div>Plan</div><div>Status</div><div style="text-align:right">MRR</div></div>
+                      <sc-for list="{{ subsRows }}" as="r" hint-placeholder-count="8"><div style="display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr;padding:0 18px;height:52px;align-items:center;border-bottom:1px solid #F1F3F6;font-size:13px"><div style="display:flex;align-items:center;gap:9px;min-width:0"><span style="width:8px;height:8px;border-radius:50%;background:{{ r.color }};flex-shrink:0"></span><span style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.name }}</span></div><div>{{ r.plan }}</div><div><span style="{{ r.statusStyle }}">{{ r.statusLabel }}</span></div><div style="text-align:right;font-weight:600">{{ r.mrr }}</div></div></sc-for>
+                    </div>
+                  </div>
+                </div>
+              </sc-if>
+
+              <!-- ============ USERS ============ -->
+              <sc-if value="{{ isUsers }}" hint-placeholder-val="{{ false }}">
+                <div style="animation:psFade .3s ease">
+                  <div style="font-size:28px;font-weight:600;letter-spacing:-.01em">Users</div><div style="font-size:13px;color:#94A3B8;margin-top:4px">{{ usersCountLabel }}</div>
+                  <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+                    <div style="position:relative;flex:0 1 280px"><span style="position:absolute;left:11px;top:9px;color:#B4BCC7">{{ searchIcon }}</span><input value="{{ usersQ }}" onChange="{{ onUsersQ }}" placeholder="Search name or email…" style="width:100%;height:36px;padding:0 12px 0 34px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px" /></div>
+                    <select value="{{ usersApp }}" onChange="{{ onUsersApp }}" style="height:36px;padding:0 10px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;color:#475569;background:#fff">{{ usersAppOpts }}</select>
+                    <select value="{{ usersStatus }}" onChange="{{ onUsersStatus }}" style="height:36px;padding:0 10px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;color:#475569;background:#fff">{{ usersStatusOpts }}</select>
+                  </div>
+                  <sc-if value="{{ usersEmpty }}" hint-placeholder-val="{{ false }}">{{ emptyState }}</sc-if>
+                  <sc-if value="{{ usersHasRows }}" hint-placeholder-val="{{ true }}">
+                    <div style="margin-top:16px;background:#fff;border:1px solid #E5E7EB;border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.10)">
+                      <div style="display:grid;grid-template-columns:2fr 1.4fr 0.8fr 0.9fr 1fr;padding:0 18px;height:42px;align-items:center;background:#FAFBFC;border-bottom:1px solid #E5E7EB;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8"><div>User</div><div>Business</div><div>Role</div><div>Status</div><div style="text-align:right">Last login</div></div>
+                      <sc-for list="{{ usersRows }}" as="u" hint-placeholder-count="8"><div onClick="{{ u.open }}" style="display:grid;grid-template-columns:2fr 1.4fr 0.8fr 0.9fr 1fr;padding:0 18px;height:58px;align-items:center;border-bottom:1px solid #F1F3F6;cursor:pointer;font-size:13.5px" style-hover="background:#FAFBFC">
+                        <div style="display:flex;align-items:center;gap:11px;min-width:0"><div style="width:32px;height:32px;border-radius:50%;background:{{ u.avatarBg }};color:{{ u.avatarFg }};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0">{{ u.initials }}</div><div style="min-width:0"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ u.name }}</div><div style="font-size:11px;color:#94A3B8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ u.email }}</div></div></div>
+                        <div style="display:flex;align-items:center;gap:7px;min-width:0"><span style="width:7px;height:7px;border-radius:50%;background:{{ u.appColor }};flex-shrink:0"></span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#475569">{{ u.business }}</span></div>
+                        <div style="color:#475569">{{ u.role }}</div>
+                        <div><span style="{{ u.statusStyle }}">{{ u.statusLabel }}</span></div>
+                        <div style="text-align:right;color:#94A3B8;font-size:12px">{{ u.lastLogin }}</div>
+                      </div></sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-if>
+
+              <!-- ============ SUPPORT ============ -->
+              <sc-if value="{{ isSupport }}" hint-placeholder-val="{{ false }}">
+                <div style="animation:psFade .3s ease;max-width:920px">
+                  <div style="font-size:28px;font-weight:600;letter-spacing:-.01em">Support tools</div><div style="font-size:13px;color:#94A3B8;margin-top:4px">Impersonation, magic links and forced logout. Every action is logged to the audit trail.</div>
+                  <div data-r="col2" style="margin-top:22px;display:grid;grid-template-columns:1fr 1fr;gap:14px">
+                    <sc-for list="{{ supportCards }}" as="c" hint-placeholder-count="3"><div style="background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:20px"><div style="display:flex;align-items:center;gap:12px"><div style="width:40px;height:40px;border-radius:10px;background:{{ c.iconBg }};color:{{ c.iconFg }};display:flex;align-items:center;justify-content:center">{{ c.icon }}</div><div style="font-size:15px;font-weight:600">{{ c.title }}</div></div><div style="font-size:13px;color:#64748B;margin-top:12px;line-height:1.55">{{ c.desc }}</div><input placeholder="{{ c.placeholder }}" style="width:100%;height:38px;margin-top:14px;padding:0 12px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px" /><button onClick="{{ c.action }}" style="{{ c.btnStyle }}">{{ c.btnLabel }}</button></div></sc-for>
+                  </div>
+                  <div style="margin-top:16px;background:#FEF3C7;border:1px solid #FCD34D;border-radius:10px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start"><span style="color:#B45309;margin-top:1px">{{ alertIcon }}</span><div style="font-size:13px;color:#92400E;line-height:1.5"><b>Impersonation is read-only and time-boxed to 15 minutes.</b> Sessions are watermarked and every request is recorded with a correlation ID.</div></div>
+                </div>
+              </sc-if>
+
+              <!-- ============ AUDIT LOG ============ -->
+              <sc-if value="{{ isAudit }}" hint-placeholder-val="{{ false }}">
+                <div style="animation:psFade .3s ease">
+                  <div style="font-size:28px;font-weight:600;letter-spacing:-.01em">Audit log</div><div style="font-size:13px;color:#94A3B8;margin-top:4px">Immutable record of every privileged action.</div>
+                  <div style="margin-top:20px;display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+                    <div style="position:relative;flex:0 1 280px"><span style="position:absolute;left:11px;top:9px;color:#B4BCC7">{{ searchIcon }}</span><input value="{{ auditQ }}" onChange="{{ onAuditQ }}" placeholder="Search actor, IP, resource…" style="width:100%;height:36px;padding:0 12px 0 34px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px" /></div>
+                    <select value="{{ auditAction }}" onChange="{{ onAuditAction }}" style="height:36px;padding:0 10px;border:1px solid #E5E7EB;border-radius:8px;font-size:13px;color:#475569;background:#fff">{{ auditActionOpts }}</select>
+                  </div>
+                  <div style="margin-top:16px;background:#fff;border:1px solid #E5E7EB;border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.10)">
+                    <div style="display:grid;grid-template-columns:0.7fr 1.4fr 1.4fr 1.2fr 1fr;padding:0 18px;height:42px;align-items:center;background:#FAFBFC;border-bottom:1px solid #E5E7EB;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8"><div>ID</div><div>Actor</div><div>Action</div><div>IP</div><div style="text-align:right">When</div></div>
+                    <sc-for list="{{ auditRows }}" as="a" hint-placeholder-count="8"><div onClick="{{ a.open }}" style="display:grid;grid-template-columns:0.7fr 1.4fr 1.4fr 1.2fr 1fr;padding:0 18px;height:52px;align-items:center;border-bottom:1px solid #F1F3F6;cursor:pointer;font-size:13px" style-hover="background:#FAFBFC">
+                      <div style="font-family:'JetBrains Mono',monospace;color:#B4BCC7;font-size:12px">#{{ a.id }}</div>
+                      <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#475569">{{ a.actor }}</div>
+                      <div><code style="font-family:'JetBrains Mono',monospace;font-size:12px;background:{{ a.actionBg }};color:{{ a.actionFg }};padding:2px 8px;border-radius:6px">{{ a.action }}</code></div>
+                      <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#64748B">{{ a.ip }}</div>
+                      <div style="text-align:right;color:#94A3B8;font-size:12px">{{ a.when }}</div>
+                    </div></sc-for>
+                  </div>
+                </div>
+              </sc-if>
+
+              <!-- ============ SYSTEM HEALTH ============ -->
+              <sc-if value="{{ isSystemHealth }}" hint-placeholder-val="{{ false }}">
+                <div style="animation:psFade .3s ease">
+                  <div style="display:flex;align-items:center;justify-content:space-between"><div><div style="font-size:28px;font-weight:600;letter-spacing:-.01em">System health</div><div style="font-size:13px;color:#94A3B8;margin-top:4px">Live status across all products · auto-refreshes</div></div><div style="display:flex;align-items:center;gap:9px;background:{{ overallBg }};color:{{ overallFg }};padding:7px 14px;border-radius:999px;font-size:13px;font-weight:600"><span style="width:9px;height:9px;border-radius:50%;background:currentColor"></span>{{ overallLabel }}</div></div>
+                  <div style="margin-top:20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px">
+                    <sc-for list="{{ healthCards }}" as="h" hint-placeholder-count="5"><div style="{{ h.cardStyle }}"><div style="display:flex;align-items:center;justify-content:space-between"><div style="display:flex;align-items:center;gap:9px"><span style="width:10px;height:10px;border-radius:50%;background:{{ h.color }}"></span><span style="font-weight:600;font-size:15px">{{ h.name }}</span></div><span style="{{ h.badgeStyle }}">{{ h.badge }}</span></div>
+                      <div style="margin-top:16px;display:flex;flex-direction:column;gap:11px">
+                        <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:#94A3B8">Response time</span><span style="font-weight:600;color:{{ h.latColor }}">{{ h.latency }}</span></div>
+                        <div style="display:flex;justify-content:space-between;font-size:13px"><span style="color:#94A3B8">Uptime (24h)</span><span style="font-weight:600">{{ h.uptime }}</span></div>
+                        <div style="height:34px;display:flex;align-items:flex-end;gap:2px;margin-top:4px">{{ h.bars }}</div>
+                      </div>
+                    </div></sc-for>
+                  </div>
+                  <div style="margin-top:16px;background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:20px"><div style="font-size:15px;font-weight:600;margin-bottom:14px">Recent incidents</div>
+                    <sc-for list="{{ incidents }}" as="i" hint-placeholder-count="3"><div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #F1F3F6"><span style="width:9px;height:9px;border-radius:50%;background:{{ i.dot }};margin-top:5px;flex-shrink:0"></span><div style="flex:1"><div style="font-size:13px;font-weight:600">{{ i.title }}</div><div style="font-size:12px;color:#94A3B8;margin-top:2px">{{ i.meta }}</div></div><span style="{{ i.badgeStyle }}">{{ i.status }}</span></div></sc-for>
+                  </div>
+                </div>
+              </sc-if>
+
+              <!-- ============ NOTIFICATIONS ============ -->
+              <sc-if value="{{ isNotifications }}" hint-placeholder-val="{{ false }}">
+                <div style="animation:psFade .3s ease;max-width:820px">
+                  <div style="display:flex;align-items:center;justify-content:space-between"><div><div style="font-size:28px;font-weight:600;letter-spacing:-.01em">Notifications</div><div style="font-size:13px;color:#94A3B8;margin-top:4px">{{ notifCountLabel }}</div></div><button onClick="{{ markAll }}" style="height:34px;padding:0 14px;border:1px solid #E5E7EB;background:#fff;border-radius:8px;font-size:13px;font-weight:500;color:#475569;cursor:pointer">Mark all read</button></div>
+                  <div style="margin-top:18px;display:flex;gap:8px;flex-wrap:wrap">{{ notifFilters }}</div>
+                  <div style="margin-top:16px;background:#fff;border:1px solid #E5E7EB;border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.10)">
+                    <sc-for list="{{ notifRows }}" as="n" hint-placeholder-count="8"><div onClick="{{ n.markRead }}" style="{{ n.rowStyle }}" style-hover="background:#FAFBFC"><div style="width:34px;height:34px;border-radius:9px;background:{{ n.iconBg }};color:{{ n.iconFg }};display:flex;align-items:center;justify-content:center;flex-shrink:0">{{ n.icon }}</div><div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:8px"><span style="font-weight:600;font-size:13.5px">{{ n.title }}</span><span style="{{ n.prioStyle }}">{{ n.priority }}</span></div><div style="font-size:12.5px;color:#64748B;margin-top:2px">{{ n.message }}</div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0"><span style="font-size:11px;color:#B4BCC7">{{ n.time }}</span><sc-if value="{{ n.unread }}" hint-placeholder-val="{{ false }}"><span style="width:8px;height:8px;border-radius:50%;background:#4F46E5"></span></sc-if></div></div></sc-for>
+                  </div>
+                </div>
+              </sc-if>
+
+              <!-- ============ ACTIVITY (SSE) ============ -->
+              <sc-if value="{{ isActivity }}" hint-placeholder-val="{{ false }}">
+                <div style="animation:psFade .3s ease;max-width:720px">
+                  <div style="display:flex;align-items:center;justify-content:space-between"><div><div style="font-size:28px;font-weight:600;letter-spacing:-.01em">Live activity</div><div style="font-size:13px;color:#94A3B8;margin-top:4px">Real-time event stream across all products</div></div><div style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:{{ connColor }}"><span style="width:8px;height:8px;border-radius:50%;background:currentColor;animation:psPulse 2s infinite"></span>{{ connLabel }}</div></div>
+                  <div style="margin-top:20px;display:flex;flex-direction:column;gap:0">
+                    <sc-for list="{{ activityRows }}" as="a" hint-placeholder-count="8"><div style="display:flex;gap:14px;align-items:flex-start;padding:2px 0"><div style="display:flex;flex-direction:column;align-items:center;flex-shrink:0"><div style="width:32px;height:32px;border-radius:9px;background:{{ a.iconBg }};color:{{ a.iconFg }};display:flex;align-items:center;justify-content:center">{{ a.icon }}</div><div style="flex:1;width:2px;background:#F1F3F6;margin:4px 0;min-height:14px"></div></div><div style="flex:1;padding-bottom:14px;{{ a.newStyle }}"><div style="display:flex;align-items:center;gap:8px"><span style="font-size:13.5px;font-weight:600">{{ a.label }}</span><span style="width:6px;height:6px;border-radius:50%;background:{{ a.pColor }}"></span><span style="font-size:12px;color:#94A3B8">{{ a.pName }}</span></div><sc-if value="{{ a.hasDetail }}" hint-placeholder-val="{{ true }}"><div style="font-size:12.5px;color:#64748B;margin-top:2px">{{ a.detail }}</div></sc-if></div><div style="font-size:11px;color:#B4BCC7;flex-shrink:0;padding-top:8px">{{ a.time }}</div></div></sc-for>
+                  </div>
+                </div>
+              </sc-if>
+
+              <!-- ============ SECURITY / IPs ============ -->
+              <sc-if value="{{ isSecurityIps }}" hint-placeholder-val="{{ false }}">
+                <div style="animation:psFade .3s ease">
+                  <div style="font-size:28px;font-weight:600;letter-spacing:-.01em">Security</div><div style="font-size:13px;color:#94A3B8;margin-top:4px">Failed logins, blocked IPs and the access allowlist.</div>
+                  <div style="margin-top:18px;display:flex;gap:6px;border-bottom:1px solid #E5E7EB">{{ ipTabs }}</div>
+                  <sc-if value="{{ ipShowBlocked }}" hint-placeholder-val="{{ true }}">
+                    <div style="margin-top:18px;background:#fff;border:1px solid #E5E7EB;border-radius:12px;overflow:hidden"><div style="display:grid;grid-template-columns:1fr 1fr 1.2fr 1fr 40px;padding:0 18px;height:42px;align-items:center;background:#FAFBFC;border-bottom:1px solid #E5E7EB;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8"><div>IP address</div><div>Reason</div><div>Blocked by</div><div>Expires</div><div></div></div>
+                      <sc-for list="{{ blockedRows }}" as="b" hint-placeholder-count="2"><div style="display:grid;grid-template-columns:1fr 1fr 1.2fr 1fr 40px;padding:0 18px;height:54px;align-items:center;border-bottom:1px solid #F1F3F6;font-size:13px"><div style="font-family:'JetBrains Mono',monospace;font-weight:600">{{ b.ip }}</div><div><code style="font-family:'JetBrains Mono',monospace;font-size:12px;background:#FEE2E2;color:#B91C1C;padding:2px 8px;border-radius:6px">{{ b.reason }}</code></div><div style="color:#64748B">{{ b.by }}</div><div style="color:#64748B">{{ b.expires }}</div><div style="text-align:right"><button onClick="{{ b.unblock }}" title="Unblock" style="width:30px;height:30px;border:1px solid #E5E7EB;border-radius:7px;background:#fff;color:#64748B;cursor:pointer;display:flex;align-items:center;justify-content:center">{{ closeIconSm }}</button></div></div></sc-for>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ ipShowFailed }}" hint-placeholder-val="{{ false }}">
+                    <div style="margin-top:18px;background:#fff;border:1px solid #E5E7EB;border-radius:12px;overflow:hidden"><div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;padding:0 18px;height:42px;align-items:center;background:#FAFBFC;border-bottom:1px solid #E5E7EB;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8"><div>Email</div><div>IP</div><div>Reason</div><div style="text-align:right">When</div></div>
+                      <sc-for list="{{ failedRows }}" as="f" hint-placeholder-count="5"><div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;padding:0 18px;height:52px;align-items:center;border-bottom:1px solid #F1F3F6;font-size:13px"><div style="color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ f.email }}</div><div style="font-family:'JetBrains Mono',monospace;font-size:12px">{{ f.ip }}</div><div><code style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#B45309">{{ f.reason }}</code></div><div style="text-align:right;color:#94A3B8;font-size:12px">{{ f.when }}</div></div></sc-for>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ ipShowAllow }}" hint-placeholder-val="{{ false }}">
+                    <div style="margin-top:18px;background:#fff;border:1px solid #E5E7EB;border-radius:12px;overflow:hidden"><div style="display:grid;grid-template-columns:1fr 1.4fr 1fr;padding:0 18px;height:42px;align-items:center;background:#FAFBFC;border-bottom:1px solid #E5E7EB;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8"><div>IP / CIDR</div><div>Label</div><div style="text-align:right">Added</div></div>
+                      <sc-for list="{{ allowRows }}" as="a" hint-placeholder-count="2"><div style="display:grid;grid-template-columns:1fr 1.4fr 1fr;padding:0 18px;height:54px;align-items:center;border-bottom:1px solid #F1F3F6;font-size:13px"><div style="font-family:'JetBrains Mono',monospace;font-weight:600">{{ a.ip }}</div><div style="color:#475569">{{ a.label }}</div><div style="text-align:right;color:#94A3B8;font-size:12px">{{ a.created }}</div></div></sc-for>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-if>
+
+              <!-- ============ ADMINS / ROLES ============ -->
+              <sc-if value="{{ isAdmins }}" hint-placeholder-val="{{ false }}">
+                <div style="animation:psFade .3s ease">
+                  <div style="display:flex;align-items:center;justify-content:space-between"><div><div style="font-size:28px;font-weight:600;letter-spacing:-.01em">Admins</div><div style="font-size:13px;color:#94A3B8;margin-top:4px">Internal staff with access to Periscope.</div></div><button onClick="{{ inviteAdmin }}" style="height:36px;padding:0 14px;background:#4F46E5;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px">{{ plusIcon }} Invite admin</button></div>
+                  <div style="margin-top:20px;background:#fff;border:1px solid #E5E7EB;border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.10)">
+                    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1.1fr;padding:0 18px;height:42px;align-items:center;background:#FAFBFC;border-bottom:1px solid #E5E7EB;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8"><div>Admin</div><div>Role</div><div>2FA</div><div style="text-align:right">Last login</div></div>
+                    <sc-for list="{{ adminRows }}" as="a" hint-placeholder-count="6"><div style="display:grid;grid-template-columns:2fr 1fr 1fr 1.1fr;padding:0 18px;height:58px;align-items:center;border-bottom:1px solid #F1F3F6;font-size:13.5px;{{ a.dim }}">
+                      <div style="display:flex;align-items:center;gap:11px;min-width:0"><div style="width:32px;height:32px;border-radius:50%;background:{{ a.avatarBg }};color:{{ a.avatarFg }};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0">{{ a.initials }}</div><div style="min-width:0"><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ a.name }}</div><div style="font-size:11px;color:#94A3B8;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ a.email }}</div></div></div>
+                      <div><span style="{{ a.roleStyle }}">{{ a.role }}</span></div>
+                      <div><span style="{{ a.totpStyle }}">{{ a.totp }}</span></div>
+                      <div style="text-align:right;color:#94A3B8;font-size:12px">{{ a.lastLogin }}</div>
+                    </div></sc-for>
+                  </div>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{ isRoles }}" hint-placeholder-val="{{ false }}">
+                <div style="animation:psFade .3s ease">
+                  <div style="font-size:28px;font-weight:600;letter-spacing:-.01em">Roles &amp; permissions</div><div style="font-size:13px;color:#94A3B8;margin-top:4px">What each role can see and do. Currently viewing as <b style="color:#0F172A">{{ roleLabel }}</b>.</div>
+                  <div style="margin-top:20px;background:#fff;border:1px solid #E5E7EB;border-radius:12px;overflow:hidden;box-shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.10)">
+                    <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:0 18px;height:44px;align-items:center;background:#FAFBFC;border-bottom:1px solid #E5E7EB;font-size:12px;font-weight:600;color:#475569"><div style="text-transform:uppercase;letter-spacing:.05em;font-size:11px;color:#94A3B8">Permission</div><div style="text-align:center">Super Admin</div><div style="text-align:center">Support</div><div style="text-align:center">Sales</div></div>
+                    <sc-for list="{{ permRows }}" as="p" hint-placeholder-count="10"><div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;padding:0 18px;height:44px;align-items:center;border-bottom:1px solid #F1F3F6;font-size:13px"><div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#475569">{{ p.name }}</div><div style="text-align:center">{{ p.sa }}</div><div style="text-align:center">{{ p.sup }}</div><div style="text-align:center">{{ p.sal }}</div></div></sc-for>
+                  </div>
+                </div>
+              </sc-if>
+
+              <!-- ============ SETTINGS → SECURITY ============ -->
+              <sc-if value="{{ isSecurity }}" hint-placeholder-val="{{ false }}">
+                <div style="animation:psFade .3s ease;max-width:760px">
+                  <div style="font-size:28px;font-weight:600;letter-spacing:-.01em">Security</div><div style="font-size:13px;color:#94A3B8;margin-top:4px">Your two-factor authentication, sessions and recovery codes.</div>
+                  <div style="margin-top:22px;background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:20px;display:flex;align-items:center;justify-content:space-between;gap:16px">
+                    <div style="display:flex;gap:14px;align-items:center"><div style="width:44px;height:44px;border-radius:11px;background:#DCFCE7;color:#16A34A;display:flex;align-items:center;justify-content:center">{{ shieldOk }}</div><div><div style="font-size:15px;font-weight:600">Authenticator app</div><div style="font-size:13px;color:#64748B;margin-top:2px">Two-factor authentication is <b style="color:#16A34A">enabled</b>.</div></div></div>
+                    <div style="display:flex;gap:8px"><button onClick="{{ regenCodes }}" style="height:36px;padding:0 14px;border:1px solid #E5E7EB;background:#fff;border-radius:8px;font-size:13px;font-weight:500;color:#475569;cursor:pointer">Recovery codes</button><button onClick="{{ reenroll }}" style="height:36px;padding:0 14px;border:1px solid #E5E7EB;background:#fff;border-radius:8px;font-size:13px;font-weight:500;color:#475569;cursor:pointer">Re-enroll</button></div>
+                  </div>
+                  <div style="margin-top:16px;background:#fff;border:1px solid #E5E7EB;border-radius:12px;overflow:hidden">
+                    <div style="padding:16px 20px;border-bottom:1px solid #F1F3F6;font-size:15px;font-weight:600">Active sessions</div>
+                    <sc-for list="{{ sessionRows }}" as="ss" hint-placeholder-count="3"><div style="display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid #F1F3F6"><div><div style="font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:8px">{{ ss.agent }}<sc-if value="{{ ss.current }}" hint-placeholder-val="{{ false }}"><span style="font-size:10px;font-weight:600;background:#DCFCE7;color:#16A34A;padding:2px 7px;border-radius:999px">THIS DEVICE</span></sc-if></div><div style="font-size:12px;color:#94A3B8;margin-top:2px;font-family:'JetBrains Mono',monospace">{{ ss.ip }} · started {{ ss.started }}</div></div><sc-if value="{{ ss.revocable }}" hint-placeholder-val="{{ true }}"><button onClick="{{ ss.revoke }}" style="height:32px;padding:0 12px;border:1px solid #E5E7EB;background:#fff;border-radius:7px;font-size:12px;font-weight:500;color:#B91C1C;cursor:pointer">Revoke</button></sc-if></div></sc-for>
+                  </div>
+                </div>
+              </sc-if>
+
+              <!--SCREENS-->
+
+            </sc-if>
+          </sc-if>
+        </main>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ============ OVERLAYS ============ -->
+  <!-- DRAWER -->
+  <sc-if value="{{ drawerOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeDrawer }}" style="position:fixed;inset:0;background:rgba(15,23,42,.35);z-index:60;animation:psFade .2s ease"></div>
+    <div style="position:fixed;top:0;right:0;bottom:0;width:440px;max-width:92vw;background:#fff;z-index:61;box-shadow:-8px 0 32px rgba(16,24,40,.14);animation:psSlideIn .22s ease;display:flex;flex-direction:column">
+      <div style="height:56px;border-bottom:1px solid #E5E7EB;display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0">
+        <div style="font-size:15px;font-weight:600">{{ drawerTitle }}</div>
+        <button onClick="{{ closeDrawer }}" style="width:32px;height:32px;border:none;background:transparent;color:#94A3B8;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:6px">{{ closeIcon }}</button>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:20px">{{ drawerBody }}</div>
+    </div>
+  </sc-if>
+
+  <!-- MODAL -->
+  <sc-if value="{{ modalOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeModal }}" style="position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:70;display:flex;align-items:center;justify-content:center;padding:24px;animation:psFade .2s ease">
+      <div onClick="{{ stop }}" style="width:100%;max-width:{{ modalWidth }};background:#fff;border-radius:14px;box-shadow:0 24px 60px rgba(16,24,40,.28);animation:psFade .25s ease;overflow:hidden">{{ modalBody }}</div>
+    </div>
+  </sc-if>
+
+  <!-- TOAST -->
+  <sc-if value="{{ toastOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:90;animation:psToastIn .25s ease">
+      <div style="{{ toastStyle }}"><span style="display:flex">{{ toastIcon }}</span><span style="font-size:13px;font-weight:500">{{ toastMsg }}</span></div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:&quot;100%&quot;}}">
+class Component extends DCLogic {
+  D = (() => {
+    const P = {
+      estate:   { key:'estate',    name:'Estate',    color:'#4F46E5' },
+      logistics:{ key:'logistics', name:'Logistics', color:'#0D9488' },
+      school:   { key:'school',    name:'School',    color:'#7C3AED' },
+      hospital: { key:'hospital',  name:'Hospital',  color:'#E11D48' },
+      esusu:    { key:'esusu',     name:'esusu',     color:'#D97706' },
+    };
+    const applications = [
+      { key:'estate', name:'Estate', businesses:142, activeBusinesses:128, users:3820, mrr:4250000, arr:51000000, activeSubscriptions:118, failedPayments:6, todaySignups:4, todayRevenue:182000, systemHealth:'healthy', avgResponseTimeMs:84 },
+      { key:'logistics', name:'Logistics', businesses:63, activeBusinesses:58, users:1290, mrr:1980000, arr:23760000, activeSubscriptions:54, failedPayments:2, todaySignups:2, todayRevenue:96000, systemHealth:'healthy', avgResponseTimeMs:112 },
+      { key:'school', name:'School', businesses:88, activeBusinesses:79, users:2450, mrr:2640000, arr:31680000, activeSubscriptions:74, failedPayments:3, todaySignups:5, todayRevenue:74000, systemHealth:'healthy', avgResponseTimeMs:97 },
+      { key:'hospital', name:'Hospital', businesses:31, activeBusinesses:24, users:940, mrr:1120000, arr:13440000, activeSubscriptions:22, failedPayments:9, todaySignups:1, todayRevenue:41000, systemHealth:'degraded', avgResponseTimeMs:248 },
+      { key:'esusu', name:'esusu', businesses:0, activeBusinesses:0, users:0, mrr:0, arr:0, activeSubscriptions:0, failedPayments:0, todaySignups:0, todayRevenue:0, systemHealth:'down', avgResponseTimeMs:0, unavailable:true },
+    ];
+    const avail = applications.filter(a=>!a.unavailable);
+    const sum = f => avail.reduce((t,a)=>t+a[f],0);
+    const kpis = {
+      applications: applications.length,
+      businesses: sum('businesses'), activeBusinesses: sum('activeBusinesses'), users: sum('users'),
+      mrr: sum('mrr'), arr: sum('arr'), monthlyRevenue: 10420000, activeSubscriptions: sum('activeSubscriptions'),
+      failedPayments: sum('failedPayments'), todaySignups: sum('todaySignups'), todayRevenue: sum('todayRevenue'),
+      systemHealth: 'degraded', avgResponseTimeMs: 135,
+    };
+    const businesses = [
+      { id:'biz_8f2a91', name:'Adeyemi Estates', status:'active', applications:['estate'], mrr:320000, users:84 },
+      { id:'biz_4c77de', name:'LagosHomes Ltd', status:'active', applications:['estate','logistics'], mrr:540000, users:210 },
+      { id:'biz_1b93a0', name:'Bright Future School', status:'active', applications:['school'], mrr:180000, users:96 },
+      { id:'biz_77e214', name:"St. Mary's Hospital", status:'suspended', applications:['hospital'], mrr:240000, users:62 },
+      { id:'biz_a02f5c', name:'Kano Logistics Co', status:'active', applications:['logistics'], mrr:410000, users:140 },
+      { id:'biz_63dd18', name:'Zenith Academy', status:'active', applications:['school','estate'], mrr:295000, users:120 },
+      { id:'biz_9ac401', name:'Unity Care Clinic', status:'inactive', applications:['hospital'], mrr:0, users:18 },
+      { id:'biz_2e5b7f', name:'Prime Properties', status:'active', applications:['estate'], mrr:610000, users:260 },
+      { id:'biz_5faa93', name:'SwiftMove Freight', status:'active', applications:['logistics','estate'], mrr:480000, users:175 },
+      { id:'biz_c81440', name:'Greenfield Schools', status:'active', applications:['school'], mrr:220000, users:105 },
+      { id:'biz_0d7e62', name:'Cornerstone Realty', status:'active', applications:['estate'], mrr:150000, users:44 },
+      { id:'biz_be3319', name:'MediTrust Group', status:'suspended', applications:['hospital','school'], mrr:130000, users:51 },
+    ];
+    const plans = ['Starter','Growth','Scale','Enterprise'];
+    const users = [
+      { id:'usr_01', email:'tunde@adeyemi.co', name:'Tunde Adeyemi', role:'Owner', status:'active', businessName:'Adeyemi Estates', appKey:'estate', lastLoginAt:'2026-07-13T08:12:00Z', createdAt:'2024-02-10' },
+      { id:'usr_02', email:'chidi@lagoshomes.ng', name:'Chidi Okonkwo', role:'Admin', status:'active', businessName:'LagosHomes Ltd', appKey:'estate', lastLoginAt:'2026-07-12T17:40:00Z', createdAt:'2024-05-22' },
+      { id:'usr_03', email:'amaka@brightfuture.edu', name:'Amaka Eze', role:'Owner', status:'active', businessName:'Bright Future School', appKey:'school', lastLoginAt:'2026-07-13T06:55:00Z', createdAt:'2024-08-01' },
+      { id:'usr_04', email:'grace@stmary.health', name:'Grace Bello', role:'Staff', status:'suspended', businessName:"St. Mary's Hospital", appKey:'hospital', lastLoginAt:'2026-06-30T11:20:00Z', createdAt:'2024-03-15' },
+      { id:'usr_05', email:'musa@kanolog.ng', name:'Musa Ibrahim', role:'Admin', status:'active', businessName:'Kano Logistics Co', appKey:'logistics', lastLoginAt:'2026-07-11T09:05:00Z', createdAt:'2024-06-30' },
+      { id:'usr_06', email:'ngozi@zenith.edu', name:'Ngozi Umeh', role:'Owner', status:'active', businessName:'Zenith Academy', appKey:'school', lastLoginAt:'2026-07-13T07:30:00Z', createdAt:'2024-09-12' },
+      { id:'usr_07', email:'ifeanyi@unitycare.ng', name:'Ifeanyi Nwosu', role:'Staff', status:'inactive', businessName:'Unity Care Clinic', appKey:'hospital', lastLoginAt:null, createdAt:'2025-01-08' },
+      { id:'usr_08', email:'bola@primeprop.ng', name:'Bola Ajayi', role:'Owner', status:'active', businessName:'Prime Properties', appKey:'estate', lastLoginAt:'2026-07-12T22:10:00Z', createdAt:'2023-11-20' },
+      { id:'usr_09', email:'emeka@swiftmove.ng', name:'Emeka Obi', role:'Admin', status:'active', businessName:'SwiftMove Freight', appKey:'logistics', lastLoginAt:'2026-07-13T05:44:00Z', createdAt:'2024-04-03' },
+      { id:'usr_10', email:'funke@greenfield.edu', name:'Funke Adebayo', role:'Owner', status:'active', businessName:'Greenfield Schools', appKey:'school', lastLoginAt:'2026-07-10T14:00:00Z', createdAt:'2024-07-19' },
+      { id:'usr_11', email:'sam@cornerstone.ng', name:'Samuel Etim', role:'Staff', status:'active', businessName:'Cornerstone Realty', appKey:'estate', lastLoginAt:'2026-07-09T10:25:00Z', createdAt:'2025-02-28' },
+      { id:'usr_12', email:'zara@meditrust.ng', name:'Zara Mohammed', role:'Admin', status:'suspended', businessName:'MediTrust Group', appKey:'hospital', lastLoginAt:'2026-06-28T16:15:00Z', createdAt:'2024-10-05' },
+    ];
+    const subscriptions = [
+      { id:'sub_01', businessId:'biz_2e5b7f', businessName:'Prime Properties', plan:'Enterprise', status:'active', mrr:610000, renewsAt:'2026-08-01', cancelledAt:null, createdAt:'2023-11-20', appKey:'estate', appName:'Estate' },
+      { id:'sub_02', businessId:'biz_4c77de', businessName:'LagosHomes Ltd', plan:'Scale', status:'active', mrr:540000, renewsAt:'2026-07-24', cancelledAt:null, createdAt:'2024-05-22', appKey:'estate', appName:'Estate' },
+      { id:'sub_03', businessId:'biz_5faa93', businessName:'SwiftMove Freight', plan:'Scale', status:'active', mrr:480000, renewsAt:'2026-07-18', cancelledAt:null, createdAt:'2024-04-03', appKey:'logistics', appName:'Logistics' },
+      { id:'sub_04', businessId:'biz_a02f5c', businessName:'Kano Logistics Co', plan:'Growth', status:'past_due', mrr:410000, renewsAt:'2026-07-15', cancelledAt:null, createdAt:'2024-06-30', appKey:'logistics', appName:'Logistics' },
+      { id:'sub_05', businessId:'biz_8f2a91', businessName:'Adeyemi Estates', plan:'Growth', status:'active', mrr:320000, renewsAt:'2026-07-29', cancelledAt:null, createdAt:'2024-02-10', appKey:'estate', appName:'Estate' },
+      { id:'sub_06', businessId:'biz_63dd18', businessName:'Zenith Academy', plan:'Growth', status:'trialing', mrr:295000, renewsAt:'2026-07-20', cancelledAt:null, createdAt:'2026-07-06', appKey:'school', appName:'School' },
+      { id:'sub_07', businessId:'biz_77e214', businessName:"St. Mary's Hospital", plan:'Growth', status:'past_due', mrr:240000, renewsAt:'2026-07-16', cancelledAt:null, createdAt:'2024-03-15', appKey:'hospital', appName:'Hospital' },
+      { id:'sub_08', businessId:'biz_c81440', businessName:'Greenfield Schools', plan:'Starter', status:'active', mrr:220000, renewsAt:'2026-08-04', cancelledAt:null, createdAt:'2024-07-19', appKey:'school', appName:'School' },
+      { id:'sub_09', businessId:'biz_1b93a0', businessName:'Bright Future School', plan:'Starter', status:'active', mrr:180000, renewsAt:'2026-07-31', cancelledAt:null, createdAt:'2024-08-01', appKey:'school', appName:'School' },
+      { id:'sub_10', businessId:'biz_0d7e62', businessName:'Cornerstone Realty', plan:'Starter', status:'active', mrr:150000, renewsAt:'2026-08-09', cancelledAt:null, createdAt:'2024-12-01', appKey:'estate', appName:'Estate' },
+      { id:'sub_11', businessId:'biz_be3319', businessName:'MediTrust Group', plan:'Starter', status:'paused', mrr:130000, renewsAt:null, cancelledAt:null, createdAt:'2024-10-05', appKey:'hospital', appName:'Hospital' },
+      { id:'sub_12', businessId:'biz_9ac401', businessName:'Unity Care Clinic', plan:'Starter', status:'cancelled', mrr:0, renewsAt:null, cancelledAt:'2026-06-12', createdAt:'2025-01-08', appKey:'hospital', appName:'Hospital' },
+    ];
+    const summary = {
+      total: 12, active: 6, trialing: 1, pastDue: 2, cancelled: 1, paused: 1, mrr: 3565000, arr: 42780000, churnedThisMonth: 2,
+      upcomingRenewals: [
+        { subscriptionId:'sub_04', businessName:'Kano Logistics Co', plan:'Growth', mrr:410000, renewsAt:'2026-07-15', appKey:'logistics' },
+        { subscriptionId:'sub_07', businessName:"St. Mary's Hospital", plan:'Growth', mrr:240000, renewsAt:'2026-07-16', appKey:'hospital' },
+        { subscriptionId:'sub_03', businessName:'SwiftMove Freight', plan:'Scale', mrr:480000, renewsAt:'2026-07-18', appKey:'logistics' },
+        { subscriptionId:'sub_06', businessName:'Zenith Academy', plan:'Growth', mrr:295000, renewsAt:'2026-07-20', appKey:'school' },
+        { subscriptionId:'sub_02', businessName:'LagosHomes Ltd', plan:'Scale', mrr:540000, renewsAt:'2026-07-24', appKey:'estate' },
+      ],
+      planBreakdown: [
+        { plan:'Starter', count:4, mrr:680000 },
+        { plan:'Growth', count:4, mrr:1265000 },
+        { plan:'Scale', count:2, mrr:1020000 },
+        { plan:'Enterprise', count:1, mrr:610000 },
+      ],
+    };
+    const revenue = {
+      todayRevenue: 393000, mtdRevenue: 6820000, ytdRevenue: 71240000, todayTransactions: 214, mtdTransactions: 4180,
+      commission: 512000, refunds: 84000, outstanding: 320000, currency:'NGN',
+      byApp: [
+        { appKey:'estate', todayRevenue:182000, mtdRevenue:3120000, ytdRevenue:34800000, todayTransactions:96, mtdTransactions:1840, commission:234000, refunds:32000, outstanding:120000, currency:'NGN' },
+        { appKey:'logistics', todayRevenue:96000, mtdRevenue:1480000, ytdRevenue:16200000, todayTransactions:52, mtdTransactions:980, commission:111000, refunds:18000, outstanding:74000, currency:'NGN' },
+        { appKey:'school', todayRevenue:74000, mtdRevenue:1560000, ytdRevenue:15100000, todayTransactions:44, mtdTransactions:920, commission:117000, refunds:21000, outstanding:66000, currency:'NGN' },
+        { appKey:'hospital', todayRevenue:41000, mtdRevenue:660000, ytdRevenue:5140000, todayTransactions:22, mtdTransactions:440, commission:50000, refunds:13000, outstanding:60000, currency:'NGN' },
+      ],
+    };
+    const audit = [
+      { id:1201, actor:'ada@periscope.local', actorId:2, action:'support.impersonate', resource:'admin', resourceId:'adm_14', ip:'102.89.34.12', correlationId:'c1f4a9e2-77bd-4a01-9e33', createdAt:'2026-07-13T08:22:11Z', before:null, after:{ readOnly:true, expiresIn:'15m' } },
+      { id:1200, actor:'auth', action:'login.failed', resource:'session', resourceId:null, ip:'41.184.90.7', correlationId:'b2d0c8a1-1029-4f7b-8a2c', createdAt:'2026-07-13T08:05:44Z', before:null, after:{ reason:'invalid_totp' } },
+      { id:1199, actor:'ada@periscope.local', actorId:2, action:'business.read', resource:'business', resourceId:'biz_2e5b7f', ip:'102.89.34.12', correlationId:'9a71e3f0-55cd-4bb2-91aa', createdAt:'2026-07-13T07:58:02Z', before:null, after:null },
+      { id:1198, actor:'kunle@periscope.local', actorId:5, action:'security.ip.block', resource:'ip', resourceId:'196.201.14.9', ip:'105.112.4.55', correlationId:'6cd2b8f1-0a44-4c9d-88ef', createdAt:'2026-07-13T07:41:19Z', before:null, after:{ reason:'brute_force', expiresAt:'2026-07-20' } },
+      { id:1197, actor:'ada@periscope.local', actorId:2, action:'support.magic-link', resource:'user', resourceId:'usr_03', ip:'102.89.34.12', correlationId:'2e8a1c77-9b3d-4e10-a0f2', createdAt:'2026-07-13T07:30:55Z', before:null, after:{ expiresIn:'5m' } },
+      { id:1196, actor:'auth', action:'login.success', resource:'session', resourceId:'ses_9821', ip:'102.89.34.12', correlationId:'44f0b6a2-77c1-4a3e-9db0', createdAt:'2026-07-13T07:12:03Z', before:null, after:{ role:'super-admin' } },
+      { id:1195, actor:'kunle@periscope.local', actorId:5, action:'system.write', resource:'notification', resourceId:'ntf_44', ip:'105.112.4.55', correlationId:'88ab12cd-4432-4a90-b1c3', createdAt:'2026-07-13T06:50:41Z', before:null, after:{ category:'infrastructure', priority:'high' } },
+      { id:1194, actor:'ada@periscope.local', actorId:2, action:'support.force-logout', resource:'admin', resourceId:'adm_09', ip:'102.89.34.12', correlationId:'71c9e0aa-2bb4-4d5f-9a01', createdAt:'2026-07-13T06:22:18Z', before:null, after:{ sessionsRevoked:3 } },
+      { id:1193, actor:'auth', action:'login.failed', resource:'session', resourceId:null, ip:'196.201.14.9', correlationId:'0d3f7b12-88a1-4c2e-90ba', createdAt:'2026-07-13T05:58:30Z', before:null, after:{ reason:'invalid_password' } },
+      { id:1192, actor:'ada@periscope.local', actorId:2, action:'auth.totp.enable', resource:'admin', resourceId:'adm_02', ip:'102.89.34.12', correlationId:'aa17c3e9-6d2b-4f01-8c7d', createdAt:'2026-07-12T22:04:12Z', before:{ totpEnabled:false }, after:{ totpEnabled:true } },
+    ];
+    const notifications = [
+      { id:44, category:'infrastructure', priority:'critical', title:'Hospital API degraded', message:'Gateway reporting elevated latency (248ms avg) for the Hospital product.', appKey:'hospital', readAt:null, createdAt:'2026-07-13T08:20:00Z' },
+      { id:43, category:'security', priority:'high', title:'IP blocked after repeated failures', message:'196.201.14.9 blocked after 5 failed login attempts.', appKey:null, readAt:null, createdAt:'2026-07-13T07:41:00Z' },
+      { id:42, category:'billing', priority:'high', title:'9 failed payments on Hospital', message:'Failed payment count rose above threshold for the Hospital product.', appKey:'hospital', readAt:null, createdAt:'2026-07-13T06:55:00Z' },
+      { id:41, category:'business', priority:'medium', title:'New business signed up', message:'Cornerstone Realty activated an Estate Starter subscription.', appKey:'estate', readAt:'2026-07-13T05:00:00Z', createdAt:'2026-07-13T04:48:00Z' },
+      { id:40, category:'support', priority:'medium', title:'Magic link sent', message:'Support issued a magic link to amaka@brightfuture.edu.', appKey:'school', readAt:null, createdAt:'2026-07-13T03:30:00Z' },
+      { id:39, category:'system', priority:'low', title:'Snapshot job completed', message:'Nightly metrics snapshot persisted successfully.', appKey:null, readAt:'2026-07-12T23:10:00Z', createdAt:'2026-07-12T23:05:00Z' },
+      { id:38, category:'billing', priority:'medium', title:'Subscription past due', message:'Kano Logistics Co Growth plan is now past due.', appKey:'logistics', readAt:null, createdAt:'2026-07-12T20:15:00Z' },
+      { id:37, category:'business', priority:'low', title:'Trial started', message:'Zenith Academy began a School Growth trial.', appKey:'school', readAt:'2026-07-12T18:00:00Z', createdAt:'2026-07-12T17:50:00Z' },
+    ];
+    const sessions = [
+      { id:9821, adminId:2, ip:'102.89.34.12', userAgent:'Chrome 126 · macOS', expiresAt:'2026-07-13T20:00:00Z', createdAt:'2026-07-13T07:12:03Z', current:true },
+      { id:9803, adminId:2, ip:'102.89.34.12', userAgent:'Safari 17 · iPhone', expiresAt:'2026-07-14T09:00:00Z', createdAt:'2026-07-12T14:30:00Z', current:false },
+      { id:9788, adminId:2, ip:'41.58.120.9', userAgent:'Firefox 128 · Windows', expiresAt:'2026-07-13T18:00:00Z', createdAt:'2026-07-11T10:05:00Z', current:false },
+    ];
+    const failedLogins = [
+      { id:501, email:'attacker@bad.io', ip:'196.201.14.9', reason:'invalid_password', createdAt:'2026-07-13T05:58:30Z' },
+      { id:500, email:'ada@periscope.local', ip:'41.184.90.7', reason:'invalid_totp', createdAt:'2026-07-13T08:05:44Z' },
+      { id:499, email:'unknown@nowhere.io', ip:'196.201.14.9', reason:'user_not_found', createdAt:'2026-07-13T05:57:12Z' },
+      { id:498, email:'kunle@periscope.local', ip:'105.112.4.55', reason:'invalid_totp', createdAt:'2026-07-12T21:10:00Z' },
+      { id:497, email:'attacker@bad.io', ip:'196.201.14.9', reason:'invalid_password', createdAt:'2026-07-13T05:56:40Z' },
+    ];
+    const blockedIPs = [
+      { id:31, ip:'196.201.14.9', reason:'brute_force', blockedBy:'kunle@periscope.local', expiresAt:'2026-07-20', createdAt:'2026-07-13T07:41:19Z' },
+      { id:30, ip:'80.240.16.4', reason:'known_bad_actor', blockedBy:'ada@periscope.local', expiresAt:null, createdAt:'2026-07-08T12:00:00Z' },
+    ];
+    const allowlist = [
+      { id:12, ip:'102.89.34.0/24', label:'Lagos HQ', createdAt:'2025-11-01' },
+      { id:11, ip:'41.58.120.9', label:'Ada — home VPN', createdAt:'2026-02-14' },
+    ];
+    const admins = [
+      { id:2, name:'Ada Obi', email:'ada@periscope.local', role:'super-admin', totpEnabled:true, isActive:true, lastLoginAt:'2026-07-13T07:12:03Z' },
+      { id:5, name:'Kunle Bello', email:'kunle@periscope.local', role:'super-admin', totpEnabled:true, isActive:true, lastLoginAt:'2026-07-12T21:15:00Z' },
+      { id:9, name:'Ngozi Ade', email:'ngozi@periscope.local', role:'support', totpEnabled:true, isActive:true, lastLoginAt:'2026-07-13T06:00:00Z' },
+      { id:14, name:'Tomiwa Ola', email:'tomiwa@periscope.local', role:'support', totpEnabled:false, isActive:true, lastLoginAt:'2026-07-11T15:20:00Z' },
+      { id:18, name:'Fatima Sani', email:'fatima@periscope.local', role:'sales', totpEnabled:true, isActive:true, lastLoginAt:'2026-07-10T09:45:00Z' },
+      { id:22, name:'Deji Coker', email:'deji@periscope.local', role:'sales', totpEnabled:false, isActive:false, lastLoginAt:null },
+    ];
+    const mrrTrend = [6.9,7.1,7.4,7.6,7.9,8.2,8.5,8.8,9.1,9.4,9.7,9.99].map(v=>v*1000000);
+    const usersSpark = [7.2,7.4,7.5,7.8,8.0,8.1,8.3,8.5].map(v=>v*1000);
+    const mrrSpark = mrrTrend.slice(4);
+    return { P, applications, kpis, businesses, plans, users, subscriptions, summary, revenue, audit, notifications, sessions, failedLogins, blockedIPs, allowlist, admins, mrrTrend, usersSpark, mrrSpark };
+  })();
+
+  ROLE_PERMS = {
+    'super-admin': ['business.read','business.write','business.delete','user.read','user.write','billing.read','billing.write','subscription.read','customer.read','support.read','support.write','system.read','system.write'],
+    'support': ['business.read','user.read','support.read','support.write'],
+    'sales': ['business.read','subscription.read','billing.read','customer.read'],
+  };
+
+  state = {
+    route: 'login', role: 'super-admin', loading: false, sidebarCollapsed: false,
+    loginEmail: 'ada@periscope.local', loginPass: '', showPass: false, loginError: false,
+    mfaDigits: ['','','','','',''], mfaError: false,
+    range: 'today', selectedBusinessId: 'biz_2e5b7f',
+    drawer: null, modal: null, toast: null, readIds: {},
+    filters: { bizQ:'', bizStatus:'all', bizApp:'all', bizSort:'mrr', usersQ:'', usersApp:'all', usersStatus:'all', subsStatus:'all', auditQ:'', auditAction:'all', notifCat:'all', notifPrio:'all', notifUnread:false },
+    secTab: 'sessions', ipTab: 'blocked', settingsTab: 'security', adminTab: 'admins',
+    activity: [], connected: false,
+    impersonation: null,
+    vw: (typeof window!=='undefined' ? window.innerWidth : 1440), mobileNav: false,
+  };
+
+  startImpersonation = (target) => {
+    this.closeModal(); this.closeDrawer();
+    this.setState({ impersonation: { target, endsAt: Date.now() + 15*60*1000 } });
+    this.toast('Impersonation session started (read-only, 15m)');
+    clearInterval(this._imp);
+    this._imp = setInterval(() => {
+      if (!this.state.impersonation) { clearInterval(this._imp); return; }
+      if (Date.now() >= this.state.impersonation.endsAt) { this.exitImpersonation(true); }
+      else this.forceUpdate();
+    }, 1000);
+  };
+  exitImpersonation = (expired) => {
+    clearInterval(this._imp);
+    this.setState({ impersonation: null });
+    this.toast(expired===true ? 'Impersonation session expired' : 'Exited impersonation session');
+  };
+
+  componentDidMount() {
+    const seed = [
+      { id:'a1', type:'connected', timestamp:new Date().toISOString() },
+    ];
+    this.setState({ activity: this._seedActivity(), connected: true });
+    this._act = setInterval(() => {
+      this.setState(s => ({ activity: [this._mkEvent(), ...s.activity].slice(0, 40) }));
+    }, 4200);
+    this._tick = setInterval(() => this.forceUpdate(), 30000);
+    this._onResize = () => { if (window.innerWidth !== this.state.vw) this.setState({ vw: window.innerWidth }); };
+    window.addEventListener('resize', this._onResize);
+    this._onResize();
+  }
+  componentWillUnmount() { clearInterval(this._act); clearInterval(this._tick); window.removeEventListener('resize', this._onResize); }
+
+  _seedActivity() {
+    const now = Date.now();
+    const evs = [
+      { type:'business.viewed', actor:'ada@periscope.local', detail:'Prime Properties', appKey:'estate' },
+      { type:'payment.succeeded', detail:'₦48,000 · SwiftMove Freight', appKey:'logistics' },
+      { type:'user.login', actor:'chidi@lagoshomes.ng', appKey:'estate' },
+      { type:'subscription.renewed', detail:'Greenfield Schools · Starter', appKey:'school' },
+      { type:'payment.failed', detail:"St. Mary's Hospital · ₦240,000", appKey:'hospital' },
+    ];
+    return evs.map((e,i)=>({ id:'seed'+i, timestamp:new Date(now - (i+1)*38000).toISOString(), ...e }));
+  }
+  _mkEvent() {
+    const pool = [
+      { type:'payment.succeeded', detail:'₦'+(Math.floor(Math.random()*90+10)*1000).toLocaleString()+' · Estate', appKey:'estate' },
+      { type:'user.login', actor:'user'+Math.floor(Math.random()*90)+'@estate.ng', appKey:'estate' },
+      { type:'business.created', detail:'New business on Logistics', appKey:'logistics' },
+      { type:'subscription.trialing', detail:'School · Growth trial', appKey:'school' },
+      { type:'payment.failed', detail:'Hospital · ₦'+(Math.floor(Math.random()*40+10)*1000).toLocaleString(), appKey:'hospital' },
+      { type:'user.login', actor:'admin@kanolog.ng', appKey:'logistics' },
+    ];
+    const e = pool[Math.floor(Math.random()*pool.length)];
+    return { id:'e'+Date.now(), timestamp:new Date().toISOString(), ...e };
+  }
+
+  // ---------- helpers ----------
+  fmt(a, c='NGN') { try { return new Intl.NumberFormat('en-NG',{ style:'currency', currency:c, maximumFractionDigits:0 }).format(a); } catch(e) { return '₦'+Number(a).toLocaleString(); } }
+  fmtCompact(a) { if(a>=1e6) return '₦'+(a/1e6).toFixed(1).replace(/\.0$/,'')+'M'; if(a>=1e3) return '₦'+Math.round(a/1e3)+'k'; return '₦'+a; }
+  num(n) { return Number(n).toLocaleString('en-US'); }
+  _fmtCountdown(endsAt) { const ms=Math.max(0,endsAt-Date.now()); const m=Math.floor(ms/60000); const sec=Math.floor((ms%60000)/1000); return m+':'+String(sec).padStart(2,'0'); }
+  perms() { return this.ROLE_PERMS[this.state.role] || []; }
+  can(p) { return this.perms().includes(p); }
+  rel(iso) {
+    if(!iso) return '—';
+    const d = (Date.now() - new Date(iso).getTime())/1000;
+    if(d<60) return 'just now'; if(d<3600) return Math.floor(d/60)+'m ago';
+    if(d<86400) return Math.floor(d/3600)+'h ago'; return Math.floor(d/86400)+'d ago';
+  }
+  statusColors(s) {
+    const map = {
+      active:['#16A34A','#DCFCE7'], healthy:['#16A34A','#DCFCE7'],
+      degraded:['#D97706','#FEF3C7'], suspended:['#D97706','#FEF3C7'], past_due:['#D97706','#FEF3C7'], trialing:['#D97706','#FEF3C7'],
+      down:['#DC2626','#FEE2E2'], cancelled:['#DC2626','#FEE2E2'],
+      inactive:['#64748B','#F1F3F6'], paused:['#64748B','#F1F3F6'],
+    };
+    return map[s] || ['#64748B','#F1F3F6'];
+  }
+  badge(s, label) {
+    const [fg,bg] = this.statusColors(s);
+    return { fg, bg, label: label || s.replace('_',' ') };
+  }
+  pcolor(k) { return (this.D.P[k] && this.D.P[k].color) || '#94A3B8'; }
+  pname(k) { return (this.D.P[k] && this.D.P[k].name) || k; }
+
+  // ---------- icons ----------
+  ic(name, size=18, sw=1.8) {
+    const paths = {
+      dashboard:'M3 3h7v7H3zM14 3h7v4h-7zM14 10h7v11h-7zM3 14h7v7H3z',
+      businesses:'M3 21V7l6-4v18M9 21V10l6-3v14M15 21v-9l6-1v10M2 21h20',
+      revenue:'M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6',
+      subscriptions:'M3 5h18v14H3zM3 10h18M8 15h5',
+      users:'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M23 21v-2a4 4 0 0 0-3-3.87M16 3.13A4 4 0 0 1 16 11',
+      support:'M18.36 6.64A9 9 0 1 1 5.64 6.64M12 2v10M8 12a4 4 0 0 0 8 0',
+      notifications:'M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0',
+      activity:'M22 12h-4l-3 9L9 3l-3 9H2',
+      health:'M22 12h-4l-3 9L9 3l-3 9H2',
+      audit:'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M9 13h6M9 17h6M9 9h1',
+      security:'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
+      admins:'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 11l-3 3-2-2',
+      roles:'M9 12l2 2 4-4M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
+      shield:'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
+      bell:'M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0',
+      search:'M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM21 21l-4.35-4.35',
+      close:'M18 6L6 18M6 6l12 12',
+      copy:'M9 9h11v11H9zM5 15H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1',
+      download:'M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3',
+      check:'M20 6L9 17l-5-5',
+      alert:'M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0zM12 9v4M12 17h.01',
+      refresh:'M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15',
+      lock:'M19 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2zM7 11V7a5 5 0 0 1 10 0v4',
+      collapse:'M11 17l-5-5 5-5M18 17l-5-5 5-5',
+      logout:'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9',
+      chevron:'M9 18l6-6-6-6',
+      eye:'M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z',
+      eyeoff:'M17.94 17.94A10 10 0 0 1 12 20c-7 0-11-8-11-8a18 18 0 0 1 5.06-5.94M9.9 4.24A9 9 0 0 1 12 4c7 0 11 8 11 8a18 18 0 0 1-2.16 3.19M1 1l22 22',
+      dots:'M12 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM19 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2zM5 13a1 1 0 1 0 0-2 1 1 0 0 0 0 2z',
+      plus:'M12 5v14M5 12h14',
+      empty:'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
+      external:'M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3',
+      menu:'M3 12h18M3 6h18M3 18h18',
+    };
+    const R = React.createElement;
+    return R('svg', { width:size, height:size, viewBox:'0 0 24 24', fill:'none', stroke:'currentColor', strokeWidth:sw, strokeLinecap:'round', strokeLinejoin:'round' },
+      String(paths[name]||'').split(/(?<=[zZ])/).filter(Boolean).map((d,i)=>R('path',{key:i,d})) );
+  }
+  aperture(size=32, stroke='#4F46E5') {
+    const R = React.createElement;
+    return R('svg',{width:size,height:size,viewBox:'0 0 32 32',fill:'none'},
+      R('circle',{cx:16,cy:16,r:13,stroke,strokeWidth:2}),
+      R('circle',{cx:16,cy:16,r:5,fill:stroke}),
+      [0,60,120,180,240,300].map(a=>{const r=a*Math.PI/180;return R('line',{key:a,x1:16+Math.cos(r)*6,y1:16+Math.sin(r)*6,x2:16+Math.cos(r)*13,y2:16+Math.sin(r)*13,stroke,strokeWidth:2,strokeLinecap:'round'});})
+    );
+  }
+
+  // ---------- charts ----------
+  spark(series, color, w=90, h=30) {
+    const R = React.createElement; const mn=Math.min(...series), mx=Math.max(...series), rg=mx-mn||1;
+    const pts = series.map((v,i)=>[i/(series.length-1)*w, h-((v-mn)/rg)*(h-4)-2]);
+    const d = pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+    return R('svg',{width:w,height:h},R('path',{d,fill:'none',stroke:color,strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'}));
+  }
+  area(series, color, w=560, h=180) {
+    const R = React.createElement; const mn=Math.min(...series)*0.96, mx=Math.max(...series)*1.02, rg=mx-mn||1;
+    const pts = series.map((v,i)=>[i/(series.length-1)*w, h-((v-mn)/rg)*(h-24)-12]);
+    const line = pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
+    const fill = line+` L ${w} ${h} L 0 ${h} Z`;
+    const id='g'+color.replace('#','');
+    return R('svg',{width:'100%',height:h,viewBox:`0 0 ${w} ${h}`,preserveAspectRatio:'none'},
+      R('defs',null,R('linearGradient',{id,x1:0,y1:0,x2:0,y2:1},R('stop',{offset:'0%',stopColor:color,stopOpacity:0.18}),R('stop',{offset:'100%',stopColor:color,stopOpacity:0}))),
+      [0,1,2,3].map(i=>R('line',{key:i,x1:0,x2:w,y1:12+i*(h-24)/3,y2:12+i*(h-24)/3,stroke:'#F1F3F6',strokeWidth:1})),
+      R('path',{d:fill,fill:`url(#${id})`}),
+      R('path',{d:line,fill:'none',stroke:color,strokeWidth:2.5,strokeLinecap:'round',strokeLinejoin:'round'}),
+      pts.filter((_,i)=>i===pts.length-1).map((p,i)=>R('circle',{key:i,cx:p[0],cy:p[1],r:4,fill:color}))
+    );
+  }
+  donut(segs, size=104) {
+    const R = React.createElement; const total=segs.reduce((t,s)=>t+s.value,0)||1; const r=size/2-9, c=2*Math.PI*r; let off=0;
+    return R('svg',{width:size,height:size,viewBox:`0 0 ${size} ${size}`},
+      R('circle',{cx:size/2,cy:size/2,r,fill:'none',stroke:'#F1F3F6',strokeWidth:14}),
+      segs.map((s,i)=>{const len=s.value/total*c; const el=R('circle',{key:i,cx:size/2,cy:size/2,r,fill:'none',stroke:s.color,strokeWidth:14,strokeDasharray:`${len} ${c-len}`,strokeDashoffset:-off,transform:`rotate(-90 ${size/2} ${size/2})`}); off+=len; return el;})
+    );
+  }
+  multiLine(seriesMap, w=640, h=200) {
+    const R = React.createElement; const all=[].concat(...seriesMap.map(s=>s.data)); const mn=Math.min(...all), mx=Math.max(...all), rg=mx-mn||1;
+    return R('svg',{width:'100%',height:h,viewBox:`0 0 ${w} ${h}`,preserveAspectRatio:'none'},
+      [0,1,2,3].map(i=>R('line',{key:i,x1:0,x2:w,y1:10+i*(h-20)/3,y2:10+i*(h-20)/3,stroke:'#F1F3F6',strokeWidth:1})),
+      seriesMap.map((s,si)=>{const d=s.data.map((v,i)=>(i?'L':'M')+(i/(s.data.length-1)*w).toFixed(1)+' '+(h-((v-mn)/rg)*(h-20)-10).toFixed(1)).join(' ');return R('path',{key:si,d,fill:'none',stroke:s.color,strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round'});})
+    );
+  }
+
+  // ---------- handlers ----------
+  navigate = (route, opts={}) => {
+    const dataRoutes = ['dashboard','businesses','businessDetail','revenue','subscriptions','users','audit','systemHealth','notifications','securityIps','admins'];
+    if (dataRoutes.includes(route)) {
+      this.setState({ route, loading:true, drawer:null, mobileNav:false, ...opts });
+      clearTimeout(this._ld); this._ld = setTimeout(()=>this.setState({loading:false}), 480);
+    } else {
+      this.setState({ route, drawer:null, mobileNav:false, ...opts });
+    }
+  };
+  setRole = (r) => this.setState({ role:r });
+  toggleSidebar = () => this.setState(s=>({ sidebarCollapsed:!s.sidebarCollapsed }));
+  toggleMobileNav = () => this.setState(s=>({ mobileNav:!s.mobileNav }));
+  closeMobileNav = () => this.setState({ mobileNav:false });
+  setF = (k,v) => this.setState(s=>({ filters:{...s.filters,[k]:v} }));
+  openDrawer = (kind, payload) => this.setState({ drawer:{kind, payload} });
+  closeDrawer = () => this.setState({ drawer:null });
+  openModal = (kind, payload) => this.setState({ modal:{kind, payload} });
+  closeModal = () => this.setState({ modal:null });
+  stop = (e) => { e.stopPropagation(); };
+  toast = (msg, kind='success') => { this.setState({ toast:{msg,kind} }); clearTimeout(this._tt); this._tt=setTimeout(()=>this.setState({toast:null}), 3200); };
+  markRead = (id) => this.setState(s=>({ readIds:{...s.readIds,[id]:true} }));
+  markAllRead = () => { const r={...this.state.readIds}; this.D.notifications.forEach(n=>r[n.id]=true); this.setState({readIds:r}); };
+
+  doContinue = () => {
+    if (!this.state.loginEmail || !this.state.loginPass) { this.setState({loginError:true}); return; }
+    this.setState({ loginError:false, route:'2fa' });
+  };
+  doVerify = () => {
+    if (this.state.mfaDigits.join('').length < 6) { this.setState({mfaError:true}); return; }
+    this.setState({ mfaError:false, route:'dashboard', loading:true });
+    clearTimeout(this._ld); this._ld=setTimeout(()=>this.setState({loading:false}),600);
+  };
+  backToLogin = () => this.setState({ route:'login', mfaDigits:['','','','','',''] });
+  setDigit = (i,v) => {
+    const d=[...this.state.mfaDigits]; d[i]=v.replace(/\D/g,'').slice(-1); this.setState({mfaDigits:d});
+    if(v && this._codeRefs && this._codeRefs[i+1]) this._codeRefs[i+1].focus();
+  };
+  codeKey = (i,e) => { if(e.key==='Backspace' && !this.state.mfaDigits[i] && this._codeRefs[i-1]) this._codeRefs[i-1].focus(); };
+
+  isLoggedOut() { return this.state.route==='login' || this.state.route==='2fa'; }
+  routePerm(r) {
+    const m = { dashboard:'system.read', businesses:'business.read', businessDetail:'business.read', revenue:'billing.read', subscriptions:'subscription.read', users:'user.read', support:'support.write', notifications:'system.read', activity:'system.read', systemHealth:'system.read', audit:'system.read', securityIps:'system.read', admins:'system.write', roles:'system.write', security:null };
+    return m[r] === undefined ? null : m[r];
+  }
+
+  // ---------- code input element ----------
+  codeInputEl() {
+    const R = React.createElement; this._codeRefs = this._codeRefs || [];
+    return R('div',{style:{display:'flex',gap:10,justifyContent:'center'}}, this.state.mfaDigits.map((d,i)=>
+      R('input',{ key:i, ref:el=>this._codeRefs[i]=el, value:d, inputMode:'numeric', maxLength:1,
+        onChange:e=>this.setDigit(i,e.target.value), onKeyDown:e=>this.codeKey(i,e),
+        style:{ width:48, height:56, textAlign:'center', fontSize:22, fontWeight:600, fontVariantNumeric:'tabular-nums', border:'1px solid '+(this.state.mfaError?'#FCA5A5':'#E5E7EB'), borderRadius:10, color:'#0F172A' } })
+    ));
+  }
+
+  // ---------- skeleton ----------
+  skeletonEl() {
+    const R=React.createElement;
+    const box=(w,h,r=8,mt=0)=>R('div',{style:{width:w,height:h,borderRadius:r,marginTop:mt,background:'linear-gradient(90deg,#EEF0F3 25%,#F6F7F9 37%,#EEF0F3 63%)',backgroundSize:'400px 100%',animation:'psShimmer 1.4s infinite linear'}});
+    return R('div',{style:{animation:'psFade .2s ease'}},
+      box(220,28), box(320,14,6,10),
+      R('div',{style:{display:'grid',gridTemplateColumns:'repeat(4,1fr)',gap:14,marginTop:24}}, [0,1,2,3].map(i=>R('div',{key:i,style:{background:'#fff',border:'1px solid #E5E7EB',borderRadius:12,padding:20}},box('60%',12),box('80%',26,8,14),box('40%',12,6,12)))),
+      R('div',{style:{background:'#fff',border:'1px solid #E5E7EB',borderRadius:12,padding:20,marginTop:16}}, box(160,16), box('100%',180,8,16)),
+      R('div',{style:{background:'#fff',border:'1px solid #E5E7EB',borderRadius:12,marginTop:16,padding:'0 20px'}}, [0,1,2,3,4,5].map(i=>R('div',{key:i,style:{display:'flex',gap:16,padding:'14px 0',borderBottom:i<5?'1px solid #F1F3F6':'none'}},box('30%',14),box('20%',14),box('15%',14),box('20%',14))))
+    );
+  }
+
+  renderVals() {
+    const R = React.createElement; const s = this.state; const D = this.D;
+    const loggedOut = this.isLoggedOut();
+    const common = {
+      isLogin: s.route==='login', is2fa: s.route==='2fa', showApp: !loggedOut,
+      apertureMark: this.aperture(34), apertureMarkSm: this.aperture(26), shieldIcon: this.ic('shield',24),
+      shieldMini: this.ic('shield',14), searchIcon: this.ic('search',16), bellIcon: this.ic('bell',18),
+      activityIcon: this.ic('activity',18), collapseIcon: this.ic('collapse',18), closeIcon: this.ic('close',18),
+      refreshIcon: this.ic('refresh',15), alertIcon: this.ic('alert',18), lockIcon: this.ic('lock',26),
+      eyeIcon: this.ic(s.showPass?'eyeoff':'eye',18),
+      productDots: Object.values(D.P),
+      // login
+      loginEmail: s.loginEmail, loginPass: s.loginPass, loginError: s.loginError, passType: s.showPass?'text':'password',
+      onLoginEmail: e=>this.setState({loginEmail:e.target.value}), onLoginPass: e=>this.setState({loginPass:e.target.value}),
+      togglePass: ()=>this.setState(x=>({showPass:!x.showPass})), doContinue: this.doContinue,
+      // 2fa
+      mfaError: s.mfaError, codeInput: this.codeInputEl(), mfaCountdown: '4:52', doVerify: this.doVerify, backToLogin: this.backToLogin,
+    };
+
+    if (loggedOut) return common;
+
+    // ---- app shell ----
+    const navDef = [
+      { group:'OVERVIEW', items:[ {label:'Dashboard',route:'dashboard',perm:'system.read',icon:'dashboard'} ] },
+      { group:'PORTFOLIO', items:[
+        {label:'Businesses',route:'businesses',perm:'business.read',icon:'businesses'},
+        {label:'Revenue',route:'revenue',perm:'billing.read',icon:'revenue'},
+        {label:'Subscriptions',route:'subscriptions',perm:'subscription.read',icon:'subscriptions'},
+        {label:'Users',route:'users',perm:'user.read',icon:'users'},
+      ]},
+      { group:'OPERATIONS', items:[
+        {label:'Support',route:'support',perm:'support.write',icon:'support'},
+        {label:'Notifications',route:'notifications',perm:'system.read',icon:'notifications'},
+        {label:'Activity',route:'activity',perm:'system.read',icon:'activity'},
+        {label:'System Health',route:'systemHealth',perm:'system.read',icon:'health'},
+        {label:'Audit Log',route:'audit',perm:'system.read',icon:'audit'},
+        {label:'Security',route:'securityIps',perm:'system.read',icon:'security'},
+      ]},
+      { group:'SETTINGS', items:[
+        {label:'Security',route:'security',perm:null,icon:'shield'},
+        {label:'Admins',route:'admins',perm:'system.write',icon:'admins'},
+        {label:'Roles',route:'roles',perm:'system.write',icon:'roles'},
+      ]},
+    ];
+    const activeRoute = s.route==='businessDetail' ? 'businesses' : s.route;
+    const navSections = navDef.map(sec=>({
+      group: sec.group,
+      items: sec.items.filter(it=>it.perm===null || this.can(it.perm)).map(it=>{
+        const active = it.route===activeRoute;
+        return { label:it.label, icon:this.ic(it.icon,18), iconColor: active?'#4F46E5':'#94A3B8',
+          go:()=>this.navigate(it.route),
+          rowStyle:`display:flex;align-items:center;gap:11px;height:38px;padding:0 12px;border-radius:8px;cursor:pointer;font-size:13.5px;font-weight:${active?600:500};margin-bottom:2px;color:${active?'#4F46E5':'#475569'};background:${active?'#EEF2FF':'transparent'}` };
+      }),
+    })).filter(sec=>sec.items.length);
+
+    const roleOptions = [['super-admin','Super Admin'],['support','Support'],['sales','Sales']].map(([v,l])=>({
+      label:l, pick:()=>this.setRole(v),
+      style:`height:28px;padding:0 12px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;background:${s.role===v?'#fff':'transparent'};color:${s.role===v?'#4F46E5':'#64748B'};box-shadow:${s.role===v?'0 1px 2px rgba(16,24,40,.1)':'none'}`,
+    }));
+
+    const unread = D.notifications.filter(n=>n.readAt===null && !s.readIds[n.id]).length;
+    const userName = { 'super-admin':'Ada Obi','support':'Ngozi Ade','sales':'Fatima Sani' }[s.role];
+    const roleLabel = { 'super-admin':'Super Admin','support':'Support','sales':'Sales' }[s.role];
+
+    const neededPerm = this.routePerm(s.route);
+    const forbidden = neededPerm!==null && !this.can(neededPerm);
+
+    // ---- responsive shell geometry ----
+    const mobile = s.vw < 820;
+    const collapsed = !mobile && s.sidebarCollapsed;
+    const sidebarWpx = collapsed ? '64px' : '240px';
+    const labelOpacity = collapsed ? '0' : '1';
+    const asideBase = 'background:#FFFFFF;border-right:1px solid #E5E7EB;display:flex;flex-direction:column;overflow:hidden;';
+    const asideStyle = mobile
+      ? asideBase + `position:fixed;top:0;left:0;bottom:0;width:264px;z-index:81;box-shadow:${s.mobileNav?'8px 0 32px rgba(16,24,40,.18)':'none'};transform:translateX(${s.mobileNav?'0':'-100%'});transition:transform .24s cubic-bezier(.4,0,.2,1)`
+      : asideBase + `flex:0 0 ${sidebarWpx};width:${sidebarWpx};transition:width .18s ease`;
+
+    const shell = {
+      ...common,
+      mobile: mobile, isMobile: mobile,
+      asideStyle: asideStyle,
+      sidebarWidth: sidebarWpx, labelOpacity,
+      showCollapseBtn: !mobile, showHamburger: mobile, showSearch: !mobile,
+      showRoleSwitch: s.vw >= 620, showUserMeta: s.vw >= 620,
+      hamburgerIcon: this.ic('menu',20), mobileNavOpen: mobile && s.mobileNav,
+      toggleMobileNav: this.toggleMobileNav, closeMobileNav: this.closeMobileNav,
+      mainPad: mobile?'18px 16px 40px':'28px 32px',
+      colClose: this.ic('close',20),
+      navSections, roleOptions, toggleSidebar:this.toggleSidebar,
+      hasUnread: unread>0, unreadCount: unread,
+      userInitials: userName.split(' ').map(w=>w[0]).join(''), userName, roleLabel,
+      goNotifications:()=>this.navigate('notifications'), goActivity:()=>this.navigate('activity'),
+      goBusinesses:()=>this.navigate('businesses'), goHealth:()=>this.navigate('systemHealth'),
+      downloadIcon:this.ic('download',15), chevronIcon:this.ic('chevron',16), plusIcon:this.ic('plus',16),
+      closeIconSm:this.ic('close',15), shieldOk:this.ic('check',22),
+      impersonating: !!s.impersonation,
+      impersonateTarget: s.impersonation ? s.impersonation.target : '',
+      impersonateCountdown: s.impersonation ? this._fmtCountdown(s.impersonation.endsAt) : '',
+      exitImpersonation: ()=>this.exitImpersonation(),
+      eyeBannerIcon: this.ic('eye',17), exitBannerIcon: this.ic('logout',15),
+      loading: s.loading, contentReady: !s.loading, skeleton: this.skeletonEl(),
+      forbidden, allowed: !forbidden, neededPerm: neededPerm||'—',
+      isDashboard: s.route==='dashboard', isBusinesses: s.route==='businesses', isBusinessDetail: s.route==='businessDetail',
+      isRevenue: s.route==='revenue', isSubscriptions: s.route==='subscriptions', isUsers: s.route==='users',
+      isSupport: s.route==='support', isAudit: s.route==='audit', isSystemHealth: s.route==='systemHealth',
+      isAdmins: s.route==='admins', isRoles: s.route==='roles', isSecurity: s.route==='security',
+      isNotifications: s.route==='notifications', isActivity: s.route==='activity', isSecurityIps: s.route==='securityIps',
+      // overlays
+      drawerOpen: !!s.drawer, drawerTitle: s.drawer?this._drawerTitle(s.drawer):'',
+      drawerBody: s.drawer?this._drawerBody(s.drawer):null, closeDrawer:this.closeDrawer,
+      modalOpen: !!s.modal, modalWidth: s.modal?(this._modalWidth(s.modal)):'440px',
+      modalBody: s.modal?this._modalBody(s.modal):null, closeModal:this.closeModal, stop:this.stop,
+      toastOpen: !!s.toast, toastMsg: s.toast?s.toast.msg:'',
+      toastIcon: s.toast? this.ic(s.toast.kind==='error'?'alert':'check',16):null,
+      toastStyle: s.toast? `display:flex;align-items:center;gap:10px;background:#0F172A;color:#fff;padding:11px 18px;border-radius:10px;box-shadow:0 10px 30px rgba(16,24,40,.3);${s.toast.kind==='error'?'background:#B91C1C':''}` : '',
+    };
+
+    // ---- per-route vm ----
+    let vm = {};
+    if (!s.loading && !forbidden) {
+      const r = s.route;
+      if (r==='dashboard') vm = this.vmDashboard();
+      else if (r==='businesses') vm = this.vmBusinesses();
+      else if (r==='businessDetail') vm = this.vmBusinessDetail();
+      else if (r==='revenue') vm = this.vmRevenue();
+      else if (r==='subscriptions') vm = this.vmSubscriptions();
+      else if (r==='users') vm = this.vmUsers();
+      else if (r==='support') vm = this.vmSupport();
+      else if (r==='audit') vm = this.vmAudit();
+      else if (r==='systemHealth') vm = this.vmHealth();
+      else if (r==='notifications') vm = this.vmNotifications();
+      else if (r==='activity') vm = this.vmActivity();
+      else if (r==='securityIps') vm = this.vmSecurityIps();
+      else if (r==='admins') vm = this.vmAdmins();
+      else if (r==='roles') vm = this.vmRoles();
+      else if (r==='security') vm = this.vmSettingsSecurity();
+    }
+
+    return { ...shell, ...vm };
+  }
+
+  vmDashboard() {
+    const D=this.D, k=D.kpis;
+    const rangeOptions = [['today','Today'],['7d','7d'],['30d','30d']].map(([v,l])=>({label:l,pick:()=>this.setState({range:v}),style:`height:28px;padding:0 12px;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;background:${this.state.range===v?'#fff':'transparent'};color:${this.state.range===v?'#4F46E5':'#64748B'};box-shadow:${this.state.range===v?'0 1px 2px rgba(16,24,40,.1)':'none'}`}));
+    const card='background:#FFFFFF;border:1px solid #E5E7EB;border-radius:12px;box-shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.10);padding:18px';
+    const delta=(v,up)=>`display:inline-flex;align-items:center;gap:3px;font-size:12px;font-weight:600;padding:2px 7px;border-radius:999px;background:${up?'#DCFCE7':'#FEE2E2'};color:${up?'#16A34A':'#DC2626'}`;
+    const kpiCards = [
+      { label:'MRR', value:this.fmt(k.mrr), hasDelta:true, delta:'▲ 4.2%', deltaStyle:delta(1,1), hasSpark:true, spark:this.spark(D.mrrSpark,'#4F46E5'), hasSub:false, valueColor:'#0F172A', cardStyle:card },
+      { label:'ARR', value:this.fmt(k.arr), hasDelta:true, delta:'▲ 3.8%', deltaStyle:delta(1,1), hasSpark:false, hasSub:false, valueColor:'#0F172A', cardStyle:card },
+      { label:'Businesses', value:this.num(k.businesses), hasDelta:false, hasSpark:false, hasSub:true, sub:this.num(k.activeBusinesses)+' active', valueColor:'#0F172A', cardStyle:card },
+      { label:'Users', value:this.num(k.users), hasDelta:false, hasSpark:true, spark:this.spark(D.usersSpark,'#0D9488'), hasSub:false, valueColor:'#0F172A', cardStyle:card },
+      { label:'Active subscriptions', value:this.num(k.activeSubscriptions), hasDelta:false, hasSpark:false, hasSub:false, valueColor:'#0F172A', cardStyle:card },
+      { label:'Failed payments', value:this.num(k.failedPayments), hasDelta:false, hasSpark:false, hasSub:false, valueColor: k.failedPayments>0?'#DC2626':'#0F172A', cardStyle: card+(k.failedPayments>0?';background:#FFF7F7':'') },
+      { label:'Signups today', value:this.num(k.todaySignups), hasDelta:false, hasSpark:false, hasSub:false, valueColor:'#0F172A', cardStyle:card },
+      { label:'Revenue today', value:this.fmt(k.todayRevenue), hasDelta:false, hasSpark:false, hasSub:false, valueColor:'#0F172A', cardStyle:card },
+    ];
+    const avail = D.applications.filter(a=>!a.unavailable);
+    const mixLegend = avail.map(a=>({ name:a.name, color:this.pcolor(a.key), pct: Math.round(a.mrr/D.kpis.mrr*100)+'%' }));
+    const productCards = D.applications.map(a=>{
+      const b=this.badge(a.systemHealth);
+      const base='background:#FFFFFF;border:1px solid #E5E7EB;border-radius:12px;box-shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.10);padding:16px';
+      return { name:a.name, color:this.pcolor(a.key),
+        badge:b.label, badgeStyle:`font-size:11px;font-weight:600;text-transform:capitalize;padding:3px 9px;border-radius:999px;color:${b.fg};background:${b.bg}`,
+        unavailable:!!a.unavailable, available:!a.unavailable,
+        businesses:this.num(a.businesses), users:this.num(a.users), mrr:this.fmtCompact(a.mrr), latency:a.avgResponseTimeMs+' ms',
+        cardStyle: base+(a.unavailable?';opacity:.6;background:#FAFBFC':'') };
+    });
+    const degraded = D.applications.find(a=>a.systemHealth==='degraded'||a.unavailable);
+    return {
+      updatedRel:'just now', appCount:D.kpis.applications, rangeOptions, refreshDash:()=>this.toast('Dashboard refreshed'),
+      healthDegraded: D.kpis.systemHealth!=='healthy',
+      degradedMsg: `${degraded?degraded.name:'A product'} is unavailable; showing last known values.`,
+      kpiCards, mrrChart:this.area(D.mrrTrend,'#4F46E5'), mrrTotal:this.fmtCompact(D.kpis.mrr),
+      mixDonut:this.donut(avail.map(a=>({value:a.mrr,color:this.pcolor(a.key)}))), mixLegend, productCards,
+    };
+  }
+
+  // ---- shared UI bits ----
+  chip(k) {
+    return `<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:500;background:#F1F3F6;color:#475569;padding:2px 8px;border-radius:6px"><span style="width:6px;height:6px;border-radius:50%;background:${this.pcolor(k)}"></span>${this.pname(k)}</span>`;
+  }
+  chipEls(keys) {
+    const R=React.createElement;
+    return keys.map((k,i)=>R('span',{key:i,style:{display:'inline-flex',alignItems:'center',gap:4,fontSize:11,fontWeight:500,background:'#F1F3F6',color:'#475569',padding:'2px 8px',borderRadius:6}},
+      R('span',{style:{width:6,height:6,borderRadius:'50%',background:this.pcolor(k)}}), this.pname(k)));
+  }
+  initials(name){ return name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
+  avatarPair(seed){ const palette=[['#EEF2FF','#4F46E5'],['#F0FDFA','#0D9488'],['#F5F3FF','#7C3AED'],['#FFF1F2','#E11D48'],['#FFFBEB','#D97706']]; let h=0; for(const c of seed) h=(h*31+c.charCodeAt(0))>>>0; return palette[h%palette.length]; }
+  badgeStyleStr(status){ const [fg,bg]=this.statusColors(status); return `font-size:11px;font-weight:600;text-transform:capitalize;padding:3px 9px;border-radius:999px;color:${fg};background:${bg}`; }
+  emptyStateEl(msg='No results match your filters.') {
+    const R=React.createElement;
+    return R('div',{style:{marginTop:60,textAlign:'center',color:'#94A3B8'}},
+      R('div',{style:{width:52,height:52,borderRadius:13,background:'#F1F3F6',display:'flex',alignItems:'center',justifyContent:'center',margin:'0 auto 14px',color:'#CBD2DA'}}, this.ic('empty',26)),
+      R('div',{style:{fontSize:15,fontWeight:600,color:'#475569'}},'Nothing here'),
+      R('div',{style:{fontSize:13,marginTop:4}}, msg));
+  }
+  selectOpts(pairs, current) {
+    const R=React.createElement;
+    return pairs.map(([v,l])=>R('option',{key:v,value:v},l));
+  }
+
+  // ---------- BUSINESSES ----------
+  filteredBiz() {
+    const f=this.state.filters; let rows=[...this.D.businesses];
+    if(f.bizQ) rows=rows.filter(b=>b.name.toLowerCase().includes(f.bizQ.toLowerCase()));
+    if(f.bizStatus!=='all') rows=rows.filter(b=>b.status===f.bizStatus);
+    if(f.bizApp!=='all') rows=rows.filter(b=>b.applications.includes(f.bizApp));
+    const sorters={ mrr:(a,b)=>b.mrr-a.mrr, users:(a,b)=>b.users-a.users, name:(a,b)=>a.name.localeCompare(b.name) };
+    rows.sort(sorters[f.bizSort]||sorters.mrr);
+    return rows;
+  }
+  vmBusinesses() {
+    const f=this.state.filters; const rows=this.filteredBiz();
+    const appPairs=[['all','All products'],...this.D.applications.map(a=>[a.key,a.name])];
+    return {
+      bizCountLabel:`${rows.length} of ${this.D.businesses.length} businesses`,
+      exportBiz:()=>this.toast('Exported '+rows.length+' businesses to CSV'),
+      bizQ:f.bizQ, onBizQ:e=>this.setF('bizQ',e.target.value),
+      bizStatus:f.bizStatus, onBizStatus:e=>this.setF('bizStatus',e.target.value), bizStatusOpts:this.selectOpts([['all','All statuses'],['active','Active'],['suspended','Suspended'],['inactive','Inactive']]),
+      bizApp:f.bizApp, onBizApp:e=>this.setF('bizApp',e.target.value), bizAppOpts:this.selectOpts(appPairs),
+      bizSort:f.bizSort, onBizSort:e=>this.setF('bizSort',e.target.value), bizSortOpts:this.selectOpts([['mrr','Sort: MRR'],['users','Sort: Users'],['name','Sort: Name']]),
+      bizEmpty:rows.length===0, bizHasRows:rows.length>0, emptyState:this.emptyStateEl(),
+      bizRows: rows.map(b=>{ const [bg,fg]=this.avatarPair(b.name); const bd=this.badge(b.status);
+        return { name:b.name, id:b.id, initials:this.initials(b.name), avatarBg:bg, avatarFg:fg,
+          statusStyle:this.badgeStyleStr(b.status), statusLabel:bd.label, chips:this.chipEls(b.applications),
+          mrr:this.fmtCompact(b.mrr), users:this.num(b.users), open:()=>this.navigate('businessDetail',{selectedBusinessId:b.id}) }; }),
+    };
+  }
+  vmBusinessDetail() {
+    const b=this.D.businesses.find(x=>x.id===this.state.selectedBusinessId)||this.D.businesses[0];
+    const [bg,fg]=this.avatarPair(b.name); const bd=this.badge(b.status);
+    const subs=this.D.subscriptions.filter(s=>s.businessId===b.id);
+    const subMrr=subs.reduce((t,s)=>t+s.mrr,0);
+    return { bd:{
+      name:b.name, id:b.id, initials:this.initials(b.name), avatarBg:bg, avatarFg:fg,
+      statusStyle:this.badgeStyleStr(b.status), statusLabel:bd.label,
+      suspendLabel: b.status==='suspended'?'Reactivate':'Suspend',
+      suspend:()=>this.openModal('confirm',{title:(b.status==='suspended'?'Reactivate ':'Suspend ')+b.name, body:(b.status==='suspended'?'This will restore access for all users of this business.':'This will immediately revoke access for all users of this business.'), confirmLabel:b.status==='suspended'?'Reactivate':'Suspend', danger:b.status!=='suspended', onConfirm:()=>{this.closeModal();this.toast(b.name+(b.status==='suspended'?' reactivated':' suspended'));}}),
+      impersonate:()=>this.openModal('confirm',{title:'Impersonate owner of '+b.name, body:'You will enter a read-only session as the business owner for 15 minutes. This action is logged.', confirmLabel:'Start session', danger:false, onConfirm:()=>this.startImpersonation(b.name+' · owner')}),
+      stats:[ {label:'MRR',value:this.fmtCompact(b.mrr)}, {label:'Users',value:this.num(b.users)}, {label:'Products',value:b.applications.length}, {label:'Subscriptions',value:subs.length} ],
+      subs: subs.map(s=>({ appName:s.appName, plan:s.plan, color:this.pcolor(s.appKey), renews:s.renewsAt||'—', mrr:this.fmtCompact(s.mrr), statusStyle:this.badgeStyleStr(s.status), statusLabel:this.badge(s.status).label })),
+      timeline:[
+        {dot:'#16A34A',text:'Payment succeeded · '+this.fmtCompact(Math.round(b.mrr/3)),time:'2h ago'},
+        {dot:'#4F46E5',text:'Owner logged in',time:'8h ago'},
+        {dot:'#7C3AED',text:'Subscription renewed',time:'3d ago'},
+        {dot:'#94A3B8',text:'Business created',time:'—'},
+      ],
+    }};
+  }
+
+  // ---------- REVENUE ----------
+  vmRevenue() {
+    const rv=this.D.revenue; const mtdMax=Math.max(...rv.byApp.map(a=>a.mtdRevenue));
+    return {
+      exportRev:()=>this.toast('Revenue report exported'),
+      revKpis:[
+        {label:'Today',value:this.fmt(rv.todayRevenue),sub:rv.todayTransactions+' transactions'},
+        {label:'Month to date',value:this.fmt(rv.mtdRevenue),sub:rv.mtdTransactions.toLocaleString()+' transactions'},
+        {label:'Year to date',value:this.fmt(rv.ytdRevenue),sub:'across 4 products'},
+        {label:'Commission (MTD)',value:this.fmt(rv.commission),sub:'platform take'},
+      ],
+      revBars: rv.byApp.map(a=>({ name:this.pname(a.appKey), color:this.pcolor(a.appKey), value:this.fmtCompact(a.mtdRevenue), pct:Math.round(a.mtdRevenue/mtdMax*100)+'%' })),
+      revRecon:[
+        {label:'Gross MTD',value:this.fmt(rv.mtdRevenue),color:'#0F172A'},
+        {label:'Commission',value:this.fmt(rv.commission),color:'#16A34A'},
+        {label:'Refunds',value:'−'+this.fmt(rv.refunds),color:'#DC2626'},
+        {label:'Outstanding',value:this.fmt(rv.outstanding),color:'#B45309'},
+      ],
+      revTable: rv.byApp.map(a=>({ name:this.pname(a.appKey), color:this.pcolor(a.appKey), today:this.fmtCompact(a.todayRevenue), mtd:this.fmtCompact(a.mtdRevenue), ytd:this.fmtCompact(a.ytdRevenue), outstanding:this.fmtCompact(a.outstanding) })),
+    };
+  }
+
+  // ---------- SUBSCRIPTIONS ----------
+  vmSubscriptions() {
+    const sm=this.D.summary; const f=this.state.filters;
+    let rows=[...this.D.subscriptions];
+    if(f.subsStatus!=='all') rows=rows.filter(s=>s.status===f.subsStatus);
+    rows.sort((a,b)=>b.mrr-a.mrr);
+    return {
+      subSummaryLabel:`${sm.total} total · ${this.fmtCompact(sm.mrr)} MRR · ${this.fmtCompact(sm.arr)} ARR`,
+      subStatCards:[
+        {label:'Active',value:sm.active,color:'#16A34A'},
+        {label:'Trialing',value:sm.trialing,color:'#D97706'},
+        {label:'Past due',value:sm.pastDue,color:'#D97706'},
+        {label:'Paused',value:sm.paused,color:'#64748B'},
+        {label:'Cancelled',value:sm.cancelled,color:'#DC2626'},
+      ],
+      planBreakdown: sm.planBreakdown.map(p=>({ plan:p.plan, count:p.count, mrr:this.fmtCompact(p.mrr) })),
+      upcomingRenewals: sm.upcomingRenewals.map(u=>({ name:u.businessName, plan:u.plan, mrr:this.fmtCompact(u.mrr), color:this.pcolor(u.appKey), date:new Date(u.renewsAt).toLocaleDateString('en-US',{month:'short',day:'numeric'}) })),
+      subsStatus:f.subsStatus, onSubsStatus:e=>this.setF('subsStatus',e.target.value), subsStatusOpts:this.selectOpts([['all','All statuses'],['active','Active'],['trialing','Trialing'],['past_due','Past due'],['paused','Paused'],['cancelled','Cancelled']]),
+      subsRows: rows.map(s=>({ name:s.businessName, plan:s.plan, color:this.pcolor(s.appKey), statusStyle:this.badgeStyleStr(s.status), statusLabel:this.badge(s.status).label, mrr:this.fmtCompact(s.mrr) })),
+    };
+  }
+
+  // ---------- USERS ----------
+  vmUsers() {
+    const f=this.state.filters; let rows=[...this.D.users];
+    if(f.usersQ) rows=rows.filter(u=>u.name.toLowerCase().includes(f.usersQ.toLowerCase())||u.email.toLowerCase().includes(f.usersQ.toLowerCase()));
+    if(f.usersApp!=='all') rows=rows.filter(u=>u.appKey===f.usersApp);
+    if(f.usersStatus!=='all') rows=rows.filter(u=>u.status===f.usersStatus);
+    const appPairs=[['all','All products'],...this.D.applications.map(a=>[a.key,a.name])];
+    return {
+      usersCountLabel:`${rows.length} of ${this.D.users.length} users`,
+      usersQ:f.usersQ, onUsersQ:e=>this.setF('usersQ',e.target.value),
+      usersApp:f.usersApp, onUsersApp:e=>this.setF('usersApp',e.target.value), usersAppOpts:this.selectOpts(appPairs),
+      usersStatus:f.usersStatus, onUsersStatus:e=>this.setF('usersStatus',e.target.value), usersStatusOpts:this.selectOpts([['all','All statuses'],['active','Active'],['suspended','Suspended'],['inactive','Inactive']]),
+      usersEmpty:rows.length===0, usersHasRows:rows.length>0, emptyState:this.emptyStateEl(),
+      usersRows: rows.map(u=>{ const [bg,fg]=this.avatarPair(u.name);
+        return { name:u.name, email:u.email, initials:this.initials(u.name), avatarBg:bg, avatarFg:fg,
+          business:u.businessName, appColor:this.pcolor(u.appKey), role:u.role,
+          statusStyle:this.badgeStyleStr(u.status), statusLabel:this.badge(u.status).label,
+          lastLogin:this.rel(u.lastLoginAt), open:()=>this.openDrawer('user',u) }; }),
+    };
+  }
+
+  // ---------- SUPPORT ----------
+  vmSupport() {
+    const btn='width:100%;height:40px;margin-top:12px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;';
+    return { supportCards:[
+      { title:'Impersonate user', desc:'Enter a read-only, watermarked session as any business user for up to 15 minutes.', placeholder:'user@business.com', icon:this.ic('users',20), iconBg:'#EEF2FF', iconFg:'#4F46E5', btnLabel:'Start impersonation', btnStyle:btn+'background:#4F46E5;color:#fff', action:()=>this.startImpersonation('user@business.com') },
+      { title:'Send magic link', desc:'Email a one-time sign-in link that expires in 5 minutes. Useful for locked-out owners.', placeholder:'user@business.com', icon:this.ic('external',20), iconBg:'#F0FDFA', iconFg:'#0D9488', btnLabel:'Send magic link', btnStyle:btn+'background:#fff;color:#0D9488;border:1px solid #0D9488', action:()=>this.toast('Magic link sent · expires in 5m') },
+      { title:'Force logout', desc:'Immediately revoke all active sessions for a user across every device.', placeholder:'user@business.com', icon:this.ic('logout',20), iconBg:'#FFF1F2', iconFg:'#E11D48', btnLabel:'Force logout', btnStyle:btn+'background:#fff;color:#B91C1C;border:1px solid #FCA5A5', action:()=>this.toast('All sessions revoked') },
+    ]};
+  }
+
+  // ---------- AUDIT ----------
+  actionColor(a){ if(a.startsWith('login.failed')||a.includes('block')) return ['#FEE2E2','#B91C1C']; if(a.startsWith('support')||a.startsWith('auth')) return ['#EEF2FF','#4F46E5']; if(a.startsWith('login.success')) return ['#DCFCE7','#16A34A']; return ['#F1F3F6','#475569']; }
+  vmAudit() {
+    const f=this.state.filters; let rows=[...this.D.audit];
+    if(f.auditQ){ const q=f.auditQ.toLowerCase(); rows=rows.filter(a=>(a.actor||'').toLowerCase().includes(q)||(a.ip||'').includes(q)||(a.action||'').includes(q)||(a.resource||'').includes(q)); }
+    if(f.auditAction!=='all') rows=rows.filter(a=>a.action.split('.')[0]===f.auditAction);
+    const cats=[...new Set(this.D.audit.map(a=>a.action.split('.')[0]))];
+    return {
+      auditQ:f.auditQ, onAuditQ:e=>this.setF('auditQ',e.target.value),
+      auditAction:f.auditAction, onAuditAction:e=>this.setF('auditAction',e.target.value), auditActionOpts:this.selectOpts([['all','All actions'],...cats.map(c=>[c,c])]),
+      auditRows: rows.map(a=>{ const [abg,afg]=this.actionColor(a.action);
+        return { id:a.id, actor:a.actor, action:a.action, actionBg:abg, actionFg:afg, ip:a.ip, when:this.rel(a.createdAt), open:()=>this.openDrawer('audit',a) }; }),
+    };
+  }
+
+  // ---------- SYSTEM HEALTH ----------
+  healthBars(seed, color) {
+    const R=React.createElement; let h=0; for(const c of seed) h=(h*31+c.charCodeAt(0))>>>0;
+    return R('div',{style:{display:'flex',alignItems:'flex-end',gap:2,height:'100%',width:'100%'}},
+      Array.from({length:24}).map((_,i)=>{ h=(h*1103515245+12345)&0x7fffffff; const v=30+(h%70); return R('div',{key:i,style:{flex:1,height:v+'%',background:color,opacity:.35+(v/140),borderRadius:1}}); }));
+  }
+  vmHealth() {
+    const overall=this.badge(this.D.kpis.systemHealth);
+    return {
+      overallBg:overall.bg, overallFg:overall.fg, overallLabel:this.D.kpis.systemHealth==='healthy'?'All systems operational':'Degraded performance',
+      healthCards: this.D.applications.map(a=>{ const b=this.badge(a.systemHealth); const base='background:#fff;border:1px solid #E5E7EB;border-radius:12px;padding:18px;box-shadow:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.10)';
+        return { name:a.name, color:this.pcolor(a.key), badge:b.label, badgeStyle:this.badgeStyleStr(a.systemHealth),
+          latency: a.unavailable?'—':a.avgResponseTimeMs+' ms', latColor: a.avgResponseTimeMs>200?'#DC2626':(a.avgResponseTimeMs>150?'#B45309':'#16A34A'),
+          uptime: a.unavailable?'—':(a.systemHealth==='degraded'?'99.1%':'99.98%'),
+          bars:this.healthBars(a.name, a.unavailable?'#CBD2DA':this.pcolor(a.key)),
+          cardStyle: base+(a.unavailable?';opacity:.6':'') }; }),
+      incidents:[
+        {dot:'#DC2626',title:'Hospital API latency elevated',meta:'Started 42m ago · gateway p95 at 248ms',status:'Investigating',badgeStyle:this.badgeStyleStr('degraded')},
+        {dot:'#DC2626',title:'esusu data pipeline offline',meta:'Started 3h ago · snapshot job failing',status:'Down',badgeStyle:this.badgeStyleStr('down')},
+        {dot:'#16A34A',title:'Estate payment webhook recovered',meta:'Resolved 5h ago · duration 12m',status:'Resolved',badgeStyle:this.badgeStyleStr('active')},
+      ],
+    };
+  }
+
+  // ---------- NOTIFICATIONS ----------
+  notifCatMeta(cat){ const m={ infrastructure:['#FFF1F2','#E11D48','health'], security:['#EEF2FF','#4F46E5','security'], billing:['#FEF3C7','#B45309','revenue'], business:['#F0FDFA','#0D9488','businesses'], support:['#F5F3FF','#7C3AED','support'], system:['#F1F3F6','#64748B','activity'] }; return m[cat]||['#F1F3F6','#64748B','bell']; }
+  vmNotifications() {
+    const f=this.state.filters; let rows=[...this.D.notifications];
+    if(f.notifCat!=='all') rows=rows.filter(n=>n.category===f.notifCat);
+    const cats=['all',...new Set(this.D.notifications.map(n=>n.category))];
+    const unreadN=n=>n.readAt===null && !this.state.readIds[n.id];
+    const prioStyle=p=>{ const c={critical:['#FEE2E2','#B91C1C'],high:['#FEF3C7','#B45309'],medium:['#EEF2FF','#4F46E5'],low:['#F1F3F6','#64748B']}[p]; return `font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;padding:1px 7px;border-radius:999px;background:${c[0]};color:${c[1]}`; };
+    return {
+      notifCountLabel:`${this.D.notifications.filter(unreadN).length} unread of ${this.D.notifications.length}`,
+      markAll:this.markAllRead,
+      notifFilters: React.createElement(React.Fragment,null, cats.map(c=>{ const active=f.notifCat===c; return React.createElement('button',{key:c,onClick:()=>this.setF('notifCat',c),style:{height:32,padding:'0 14px',border:'1px solid '+(active?'#4F46E5':'#E5E7EB'),background:active?'#EEF2FF':'#fff',color:active?'#4F46E5':'#64748B',borderRadius:999,fontSize:12,fontWeight:600,cursor:'pointer',textTransform:'capitalize'}}, c); })),
+      notifRows: rows.map((n,i)=>{ const [bg,fg,icon]=this.notifCatMeta(n.category); const ur=unreadN(n);
+        return { title:n.title, message:n.message, priority:n.priority, prioStyle:prioStyle(n.priority),
+          icon:this.ic(icon,17), iconBg:bg, iconFg:fg, time:this.rel(n.createdAt), unread:ur,
+          markRead:()=>this.markRead(n.id),
+          rowStyle:`display:flex;gap:13px;align-items:flex-start;padding:15px 18px;cursor:pointer;border-bottom:${i<rows.length-1?'1px solid #F1F3F6':'none'};${ur?'background:#FBFBFF':''}` }; }),
+    };
+  }
+
+  // ---------- ACTIVITY ----------
+  activityMeta(type){ const m={ 'payment.succeeded':['#DCFCE7','#16A34A','revenue','Payment succeeded'], 'payment.failed':['#FEE2E2','#B91C1C','revenue','Payment failed'], 'user.login':['#EEF2FF','#4F46E5','users','User signed in'], 'business.viewed':['#F1F3F6','#64748B','businesses','Business viewed'], 'business.created':['#F0FDFA','#0D9488','businesses','New business'], 'subscription.renewed':['#F5F3FF','#7C3AED','subscriptions','Subscription renewed'], 'subscription.trialing':['#FEF3C7','#B45309','subscriptions','Trial started'] }; return m[type]||['#F1F3F6','#64748B','activity',type]; }
+  vmActivity() {
+    return {
+      connColor: this.state.connected?'#16A34A':'#DC2626', connLabel: this.state.connected?'Connected':'Reconnecting…',
+      activityRows: this.state.activity.map((e,i)=>{ const [bg,fg,icon,label]=this.activityMeta(e.type);
+        return { icon:this.ic(icon,16), iconBg:bg, iconFg:fg, label, pColor:this.pcolor(e.appKey), pName:this.pname(e.appKey),
+          hasDetail:!!(e.detail||e.actor), detail:e.detail||e.actor||'', time:this.rel(e.timestamp),
+          newStyle: i===0?'animation:psFade .5s ease':'' }; }),
+    };
+  }
+
+  // ---------- SECURITY / IPs ----------
+  vmSecurityIps() {
+    const tab=this.state.ipTab;
+    const tabEls=React.createElement(React.Fragment,null, [['blocked','Blocked IPs'],['failed','Failed logins'],['allow','Allowlist']].map(([v,l])=>{ const active=tab===v; return React.createElement('button',{key:v,onClick:()=>this.setState({ipTab:v}),style:{height:40,padding:'0 4px',marginRight:20,border:'none',borderBottom:'2px solid '+(active?'#4F46E5':'transparent'),background:'none',color:active?'#4F46E5':'#64748B',fontSize:13.5,fontWeight:600,cursor:'pointer'}}, l); }));
+    return {
+      ipTabs:tabEls, ipShowBlocked:tab==='blocked', ipShowFailed:tab==='failed', ipShowAllow:tab==='allow',
+      blockedRows: this.D.blockedIPs.map(b=>({ ip:b.ip, reason:b.reason, by:b.blockedBy, expires:b.expiresAt||'Permanent', unblock:()=>this.toast(b.ip+' unblocked') })),
+      failedRows: this.D.failedLogins.map(f=>({ email:f.email, ip:f.ip, reason:f.reason, when:this.rel(f.createdAt) })),
+      allowRows: this.D.allowlist.map(a=>({ ip:a.ip, label:a.label, created:a.createdAt })),
+    };
+  }
+
+  // ---------- ADMINS / ROLES ----------
+  vmAdmins() {
+    const roleStyle=r=>{ const c={'super-admin':['#EEF2FF','#4F46E5'],support:['#F0FDFA','#0D9488'],sales:['#FEF3C7','#B45309']}[r]; return `font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;text-transform:capitalize;background:${c[0]};color:${c[1]}`; };
+    return {
+      inviteAdmin:()=>this.openModal('invite',{}),
+      adminRows: this.D.admins.map(a=>{ const [bg,fg]=this.avatarPair(a.name);
+        return { name:a.name, email:a.email, initials:this.initials(a.name), avatarBg:bg, avatarFg:fg,
+          role:a.role, roleStyle:roleStyle(a.role),
+          totp:a.totpEnabled?'Enabled':'Off', totpStyle:a.totpEnabled?this.badgeStyleStr('active'):this.badgeStyleStr('inactive'),
+          lastLogin:this.rel(a.lastLoginAt), dim:a.isActive?'':'opacity:.5' }; }),
+    };
+  }
+  vmRoles() {
+    const R=React.createElement;
+    const perms=['business.read','business.write','user.read','user.write','billing.read','subscription.read','support.write','system.read','system.write'];
+    const yes=()=>R('span',{style:{color:'#16A34A',display:'inline-flex'}},this.ic('check',16,2.4));
+    const no=()=>R('span',{style:{color:'#E2E5EA',fontSize:16,fontWeight:700}},'–');
+    return { permRows: perms.map(p=>({ name:p,
+      sa:this.ROLE_PERMS['super-admin'].includes(p)?yes():no(),
+      sup:this.ROLE_PERMS['support'].includes(p)?yes():no(),
+      sal:this.ROLE_PERMS['sales'].includes(p)?yes():no() })) };
+  }
+
+  // ---------- SETTINGS SECURITY ----------
+  vmSettingsSecurity() {
+    return {
+      regenCodes:()=>this.openModal('codes',{}),
+      reenroll:()=>this.openModal('enroll',{}),
+      sessionRows: this.D.sessions.map(s=>({ agent:s.userAgent, ip:s.ip, started:this.rel(s.createdAt), current:s.current, revocable:!s.current, revoke:()=>this.toast('Session revoked') })),
+    };
+  }
+
+  // ---- overlays ----
+  _drawerTitle(d){ return d.kind==='user'?'User details': d.kind==='audit'?'Audit event':''; }
+  _drawerBody(d){
+    const R=React.createElement;
+    const row=(l,v,mono)=>R('div',{style:{display:'flex',justifyContent:'space-between',padding:'11px 0',borderBottom:'1px solid #F1F3F6',fontSize:13,gap:16}},
+      R('span',{style:{color:'#94A3B8',flexShrink:0}},l), R('span',{style:{fontWeight:600,textAlign:'right',fontFamily:mono?"'JetBrains Mono',monospace":'inherit',wordBreak:'break-all'}},v));
+    if(d.kind==='user'){ const u=d.payload; const [bg,fg]=this.avatarPair(u.name);
+      return R('div',null,
+        R('div',{style:{display:'flex',gap:14,alignItems:'center',marginBottom:8}},
+          R('div',{style:{width:48,height:48,borderRadius:'50%',background:bg,color:fg,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,fontWeight:600}},this.initials(u.name)),
+          R('div',null,R('div',{style:{fontSize:16,fontWeight:600}},u.name),R('div',{style:{fontSize:13,color:'#94A3B8'}},u.email))),
+        R('div',{style:{marginTop:12}},
+          row('Business',u.businessName), row('Product',this.pname(u.appKey)), row('Role',u.role),
+          row('Status',this.badge(u.status).label), row('Last login',this.rel(u.lastLoginAt)), row('Member since',u.createdAt), row('User ID',u.id,true)),
+        R('div',{style:{display:'flex',gap:8,marginTop:20}},
+          R('button',{onClick:()=>{this.closeDrawer();this.navigate('support');},style:{flex:1,height:40,border:'1px solid #E5E7EB',background:'#fff',borderRadius:8,fontSize:13,fontWeight:600,color:'#475569',cursor:'pointer'}},'Support tools'),
+          R('button',{onClick:()=>{this.toast('Magic link sent to '+u.email);},style:{flex:1,height:40,border:'none',background:'#4F46E5',color:'#fff',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer'}},'Send magic link')));
+    }
+    if(d.kind==='audit'){ const a=d.payload;
+      return R('div',null,
+        R('div',{style:{marginBottom:12}},
+          row('Event ID','#'+a.id,true), row('Action',a.action,true), row('Actor',a.actor),
+          row('Resource',(a.resource||'—')+(a.resourceId?' · '+a.resourceId:'')), row('IP address',a.ip,true),
+          row('When',new Date(a.createdAt).toLocaleString()), row('Correlation ID',a.correlationId,true)),
+        (a.after? R('div',{style:{marginTop:8}},
+          R('div',{style:{fontSize:12,fontWeight:600,letterSpacing:'.05em',textTransform:'uppercase',color:'#94A3B8',marginBottom:8}},'Payload'),
+          R('pre',{style:{background:'#0F172A',color:'#E2E8F0',padding:14,borderRadius:10,fontSize:12,fontFamily:"'JetBrains Mono',monospace",overflowX:'auto',lineHeight:1.6}},JSON.stringify({before:a.before,after:a.after},null,2))) : null));
+    }
+    return null;
+  }
+  _modalWidth(m){ return m.kind==='codes'?'480px': m.kind==='enroll'?'440px':'440px'; }
+  _modalBody(m){
+    const R=React.createElement; const p=m.payload;
+    if(m.kind==='confirm'){
+      return R('div',{style:{padding:24}},
+        R('div',{style:{fontSize:17,fontWeight:600}},p.title),
+        R('div',{style:{fontSize:14,color:'#64748B',marginTop:10,lineHeight:1.55}},p.body),
+        R('div',{style:{display:'flex',gap:10,marginTop:22,justifyContent:'flex-end'}},
+          R('button',{onClick:this.closeModal,style:{height:40,padding:'0 16px',border:'1px solid #E5E7EB',background:'#fff',borderRadius:8,fontSize:13,fontWeight:600,color:'#475569',cursor:'pointer'}},'Cancel'),
+          R('button',{onClick:p.onConfirm,style:{height:40,padding:'0 16px',border:'none',background:p.danger?'#DC2626':'#4F46E5',color:'#fff',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer'}},p.confirmLabel)));
+    }
+    if(m.kind==='invite'){
+      return R('div',{style:{padding:24}},
+        R('div',{style:{fontSize:17,fontWeight:600}},'Invite an admin'),
+        R('div',{style:{fontSize:13,color:'#64748B',marginTop:8}},'They will receive an email to set up their account and enroll in 2FA.'),
+        R('label',{style:{display:'block',fontSize:12,fontWeight:600,color:'#94A3B8',marginTop:18,marginBottom:6,textTransform:'uppercase',letterSpacing:'.04em'}},'Work email'),
+        R('input',{placeholder:'name@periscope.local',style:{width:'100%',height:40,padding:'0 12px',border:'1px solid #E5E7EB',borderRadius:8,fontSize:14,boxSizing:'border-box'}}),
+        R('label',{style:{display:'block',fontSize:12,fontWeight:600,color:'#94A3B8',marginTop:14,marginBottom:6,textTransform:'uppercase',letterSpacing:'.04em'}},'Role'),
+        R('select',{style:{width:'100%',height:40,padding:'0 10px',border:'1px solid #E5E7EB',borderRadius:8,fontSize:14,background:'#fff'}},R('option',null,'Support'),R('option',null,'Sales'),R('option',null,'Super Admin')),
+        R('div',{style:{display:'flex',gap:10,marginTop:22,justifyContent:'flex-end'}},
+          R('button',{onClick:this.closeModal,style:{height:40,padding:'0 16px',border:'1px solid #E5E7EB',background:'#fff',borderRadius:8,fontSize:13,fontWeight:600,color:'#475569',cursor:'pointer'}},'Cancel'),
+          R('button',{onClick:()=>{this.closeModal();this.toast('Invitation sent');},style:{height:40,padding:'0 16px',border:'none',background:'#4F46E5',color:'#fff',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer'}},'Send invite')));
+    }
+    if(m.kind==='codes'){
+      const codes=['4F9K-2QW7','8ZM3-P1XR','6BT5-9YHN','J2VD-7KQ4','3RWL-8NC6','QX91-5MTB','7HP2-KD3F','L4N8-6VZW'];
+      return R('div',{style:{padding:24}},
+        R('div',{style:{fontSize:17,fontWeight:600}},'Recovery codes'),
+        R('div',{style:{fontSize:13,color:'#64748B',marginTop:8,lineHeight:1.5}},'Store these in a safe place. Each code can be used once if you lose access to your authenticator.'),
+        R('div',{style:{marginTop:16,display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,background:'#F7F8FA',border:'1px solid #E5E7EB',borderRadius:10,padding:16}},
+          codes.map((c,i)=>R('div',{key:i,style:{fontFamily:"'JetBrains Mono',monospace",fontSize:14,fontWeight:500,color:'#0F172A',padding:'2px 0'}},c))),
+        R('div',{style:{display:'flex',gap:10,marginTop:20}},
+          R('button',{onClick:()=>this.toast('Recovery codes copied'),style:{flex:1,height:40,border:'1px solid #E5E7EB',background:'#fff',borderRadius:8,fontSize:13,fontWeight:600,color:'#475569',cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center',gap:7}},this.ic('copy',15),'Copy all'),
+          R('button',{onClick:()=>{this.closeModal();this.toast('New recovery codes generated');},style:{flex:1,height:40,border:'none',background:'#4F46E5',color:'#fff',borderRadius:8,fontSize:13,fontWeight:600,cursor:'pointer'}},'Regenerate')));
+    }
+    if(m.kind==='enroll'){
+      return R('div',{style:{padding:24,textAlign:'center'}},
+        R('div',{style:{fontSize:17,fontWeight:600}},'Re-enroll authenticator'),
+        R('div',{style:{fontSize:13,color:'#64748B',marginTop:8,lineHeight:1.5}},'Scan this QR code with your authenticator app, then enter the 6-digit code to confirm.'),
+        R('div',{style:{width:180,height:180,margin:'20px auto',background:'#fff',border:'1px solid #E5E7EB',borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center'}}, this.qrEl()),
+        R('div',{style:{fontFamily:"'JetBrains Mono',monospace",fontSize:12,color:'#94A3B8',wordBreak:'break-all',padding:'0 20px'}},'otpauth://totp/Periscope:ada@periscope.local'),
+        R('button',{onClick:()=>{this.closeModal();this.toast('Authenticator re-enrolled');},style:{width:'100%',height:42,marginTop:20,border:'none',background:'#4F46E5',color:'#fff',borderRadius:8,fontSize:14,fontWeight:600,cursor:'pointer'}},'Done'));
+    }
+    return null;
+  }
+  qrEl(){
+    const R=React.createElement; let h=12345; const cells=[];
+    for(let y=0;y<21;y++) for(let x=0;x<21;x++){ h=(h*1103515245+12345)&0x7fffffff; const on=(h>>7)&1; const finder=(x<7&&y<7)||(x>13&&y<7)||(x<7&&y>13); if(finder){ const fx=x>13?x-14:x, fy=y>13?y-14:y; const border=fx===0||fx===6||fy===0||fy===6; const center=fx>=2&&fx<=4&&fy>=2&&fy<=4; if(border||center) cells.push([x,y]); } else if(on) cells.push([x,y]); }
+    return R('svg',{width:150,height:150,viewBox:'0 0 21 21'}, cells.map((c,i)=>R('rect',{key:i,x:c[0],y:c[1],width:1,height:1,fill:'#0F172A'})));
+  }
+}
+</script>
+</body>
+</html>
