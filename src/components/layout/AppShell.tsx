@@ -8,6 +8,19 @@ import {
 import { clsx } from 'clsx';
 import { useAuth } from '../../hooks/useAuth';
 import { MOCK_NOTIFICATIONS } from '../../lib/mockData';
+import { api } from '../../api/client';
+
+type NotifItem = typeof MOCK_NOTIFICATIONS[0];
+
+function notifRelative(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'now';
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  return `${Math.floor(h / 24)}d`;
+}
 
 const NAV = [
   { group: 'OVERVIEW', items: [
@@ -26,16 +39,23 @@ const NAV = [
   ]},
 ];
 
-function NotifDropdown({ onClose }: { onClose: () => void }) {
-  const catIcon: Record<string, string> = { critical: '🔴', billing: '💳', business: '🏢', security: '🔒' };
+function NotifDropdown({ onClose, notifications, onMarkAllRead }: {
+  onClose: () => void; notifications: NotifItem[]; onMarkAllRead: () => void;
+}) {
+  const catIcon: Record<string, string> = {
+    critical: '🔴', billing: '💳', business: '🏢', security: '🔒',
+    infrastructure: '🖥️', support: '🎧', system: '⚙️',
+  };
   return (
     <div className="absolute right-0 top-full mt-2 w-[360px] bg-white rounded-xl border border-outline shadow-dropdown z-50 animate-fade-in overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-outline">
         <span className="text-sm font-semibold text-on-surface">Notifications</span>
-        <button className="text-xs text-primary hover:underline">Mark all read</button>
+        <button onClick={onMarkAllRead} className="text-xs text-primary hover:underline">Mark all read</button>
       </div>
       <div className="max-h-80 overflow-y-auto divide-y divide-outline">
-        {MOCK_NOTIFICATIONS.slice(0, 5).map(n => (
+        {notifications.length === 0 ? (
+          <div className="px-4 py-8 text-center text-sm text-muted">No notifications</div>
+        ) : notifications.slice(0, 5).map(n => (
           <div key={n.id} className={clsx('flex gap-3 px-4 py-3 hover:bg-surface-container-low cursor-pointer', !n.read && 'bg-primary-tint/30')}>
             <span className="text-base mt-0.5">{catIcon[n.category] ?? '📌'}</span>
             <div className="flex-1 min-w-0">
@@ -66,8 +86,27 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [searchVal, setSearchVal] = useState('');
   const notifRef = useRef<HTMLDivElement>(null);
   const userRef = useRef<HTMLDivElement>(null);
+  const [notifications, setNotifications] = useState<NotifItem[]>(MOCK_NOTIFICATIONS);
 
-  const unreadCount = MOCK_NOTIFICATIONS.filter(n => !n.read).length;
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  useEffect(() => {
+    api.getNotifications()
+      .then(rows => setNotifications(rows.map(n => ({
+        id: String(n.id),
+        category: n.priority === 'critical' ? 'critical' : n.category,
+        title: n.title,
+        detail: n.message,
+        time: notifRelative(n.createdAt),
+        read: n.readAt != null,
+      }))))
+      .catch(() => { /* keep mock */ });
+  }, []);
+
+  const markAllRead = () => {
+    setNotifications(ns => ns.map(n => ({ ...n, read: true })));
+    api.markAllNotificationsRead().catch(() => { /* optimistic */ });
+  };
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -207,7 +246,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                   <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-danger" />
                 )}
               </button>
-              {notifOpen && <NotifDropdown onClose={() => setNotifOpen(false)} />}
+              {notifOpen && <NotifDropdown onClose={() => setNotifOpen(false)} notifications={notifications} onMarkAllRead={markAllRead} />}
             </div>
 
             {/* User menu */}

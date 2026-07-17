@@ -1,7 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Download, X, Copy, Check } from 'lucide-react';
 import { MOCK_AUDIT_LOG } from '../lib/mockData';
+import { api } from '../api/client';
 import { clsx } from 'clsx';
+
+type AuditRow = typeof MOCK_AUDIT_LOG[0];
 
 const ACTION_COLORS: Record<string, string> = {
   'totp.disable': 'bg-warning-bg text-warning',
@@ -20,10 +23,26 @@ function initials(email: string) { return email[0].toUpperCase(); }
 
 export function AuditLogPage() {
   const [search, setSearch] = useState('');
-  const [selected, setSelected] = useState<typeof MOCK_AUDIT_LOG[0] | null>(null);
+  const [selected, setSelected] = useState<AuditRow | null>(null);
   const [copied, setCopied] = useState(false);
+  const [entries, setEntries] = useState<AuditRow[]>(MOCK_AUDIT_LOG);
 
-  const filtered = MOCK_AUDIT_LOG.filter(e =>
+  useEffect(() => {
+    api.getAudit({ limit: 100 })
+      .then(rows => setEntries(rows.map(e => ({
+        id: String(e.id),
+        time: e.createdAt,
+        actor: e.actor,
+        actorRole: '',
+        action: e.action,
+        target: e.resourceId ?? e.resource ?? '—',
+        correlationId: e.correlationId,
+        result: /\.(failed|denied)$/.test(e.action) || e.action.includes('forbidden') ? '403 Forbidden' : 'success',
+      }))))
+      .catch(() => { /* keep mock */ });
+  }, []);
+
+  const filtered = entries.filter(e =>
     !search ||
     e.actor.toLowerCase().includes(search.toLowerCase()) ||
     e.action.toLowerCase().includes(search.toLowerCase()) ||
@@ -56,11 +75,11 @@ export function AuditLogPage() {
         </div>
         <select className="h-8 px-3 rounded-lg border border-outline bg-white text-sm text-on-surface focus:outline-none">
           <option>All actors</option>
-          {[...new Set(MOCK_AUDIT_LOG.map(e => e.actor))].map(a => <option key={a}>{a}</option>)}
+          {[...new Set(entries.map(e => e.actor))].map(a => <option key={a}>{a}</option>)}
         </select>
         <select className="h-8 px-3 rounded-lg border border-outline bg-white text-sm text-on-surface focus:outline-none">
           <option>All actions</option>
-          {[...new Set(MOCK_AUDIT_LOG.map(e => e.action))].map(a => <option key={a}>{a}</option>)}
+          {[...new Set(entries.map(e => e.action))].map(a => <option key={a}>{a}</option>)}
         </select>
       </div>
 

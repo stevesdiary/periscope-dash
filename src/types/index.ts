@@ -87,6 +87,80 @@ export interface SubscriptionRecord {
   createdAt: string;
 }
 
+export interface SubscriptionListItem extends SubscriptionRecord {
+  appKey: string;
+  appName: string;
+}
+
+export interface PlanBreakdown { plan: string; count: number; mrr: number; }
+export interface UpcomingRenewal {
+  subscriptionId: string; businessName: string; plan: string;
+  mrr: number; renewsAt: string; appKey: string;
+}
+export interface SubscriptionSummary {
+  total: number; active: number; trialing: number; pastDue: number;
+  cancelled: number; paused: number; mrr: number; arr: number;
+  churnedThisMonth: number;
+  upcomingRenewals: UpcomingRenewal[]; planBreakdown: PlanBreakdown[];
+}
+
+// Revenue
+export interface RevenueRecord {
+  appKey: string; todayRevenue: number; mtdRevenue: number; ytdRevenue: number;
+  todayTransactions: number; mtdTransactions: number;
+  commission: number; refunds: number; outstanding: number; currency: string;
+}
+export interface RevenueSummary {
+  todayRevenue: number; mtdRevenue: number; ytdRevenue: number;
+  todayTransactions: number; mtdTransactions: number;
+  commission: number; refunds: number; outstanding: number;
+  currency: string; byApp: RevenueRecord[];
+}
+
+// Users
+export interface UserRecord {
+  id: string; email: string; name: string;
+  role: string; status: 'active' | 'inactive' | 'suspended';
+  businessId: string | null; businessName: string | null;
+  lastLoginAt: string | null; createdAt: string;
+  appKey: string; appName: string;
+}
+
+// Monitoring
+export interface PlatformMetrics {
+  uptime: number; requestCount: number; errorCount: number;
+  avgResponseTimeMs: number; p95ResponseTimeMs: number; p99ResponseTimeMs: number;
+  memoryUsageMB: number; cpuUsagePercent: number;
+}
+
+// Audit
+export interface AuditEvent {
+  id: number; actor: string; actorId: number | null;
+  action: string; resource: string; resourceId: string | null;
+  before: Record<string, unknown> | null; after: Record<string, unknown> | null;
+  ip: string; correlationId: string; createdAt: string;
+}
+
+// Notifications
+export type NotificationCategory = 'business' | 'security' | 'billing' | 'infrastructure' | 'support' | 'system';
+export type NotificationPriority = 'low' | 'medium' | 'high' | 'critical';
+export interface Notification {
+  id: number; category: NotificationCategory; priority: NotificationPriority;
+  title: string; message: string; appKey: string | null;
+  readAt: string | null; createdAt: string;
+}
+
+// Security
+export interface Session { id: number; adminId: number; ip: string; userAgent: string; expiresAt: string; createdAt: string; }
+export interface FailedLogin { id: number; email: string; ip: string; reason: string; createdAt: string; }
+export interface BlockedIP { id: number; ip: string; reason: string; blockedBy: string; expiresAt: string | null; createdAt: string; }
+export interface AllowedIP { id: number; ip: string; label: string; createdAt: string; }
+
+// Support tools
+export interface ImpersonateResponse { accessToken: string; expiresIn: string; readOnly: boolean; }
+export interface MagicLinkResponse { magicToken: string; expiresIn: string; }
+export interface ForceLogoutResponse { loggedOut: boolean; sessionsRevoked: number; }
+
 // API Error
 export interface ApiError {
   error: { code: string; message: string; correlationId: string };

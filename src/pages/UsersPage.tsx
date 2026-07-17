@@ -1,24 +1,54 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, X, Mail, Building2 } from 'lucide-react';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { AppTag } from '../components/ui/AppTag';
 import { MOCK_USERS } from '../lib/mockData';
+import { api } from '../api/client';
 import { clsx } from 'clsx';
 
 type AppFilter = 'all' | 'estate' | 'school' | 'hospital' | 'logistics' | 'esusu';
 type StatusFilter = 'all' | 'active' | 'invited' | 'inactive';
+type UserRow = typeof MOCK_USERS[0];
 
 function initials(name: string) {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+}
+
+function relativeTime(iso: string | null): string {
+  if (!iso) return '—';
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
 }
 
 export function UsersPage() {
   const [search, setSearch] = useState('');
   const [appFilter, setAppFilter] = useState<AppFilter>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [selected, setSelected] = useState<typeof MOCK_USERS[0] | null>(null);
+  const [selected, setSelected] = useState<UserRow | null>(null);
+  const [users, setUsers] = useState<UserRow[]>(MOCK_USERS);
 
-  const filtered = MOCK_USERS.filter(u => {
+  useEffect(() => {
+    api.getUsers()
+      .then(rows => setUsers(rows.map(u => ({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        business: u.businessName ?? '—',
+        businessId: u.businessId ?? '',
+        applications: [u.appKey],
+        role: u.role,
+        status: u.status,
+        lastActive: relativeTime(u.lastLoginAt),
+      }))))
+      .catch(() => { /* keep mock */ });
+  }, []);
+
+  const filtered = users.filter(u => {
     if (search && !u.name.toLowerCase().includes(search.toLowerCase()) && !u.email.toLowerCase().includes(search.toLowerCase())) return false;
     if (appFilter !== 'all' && !u.applications.includes(appFilter)) return false;
     if (statusFilter !== 'all' && u.status !== statusFilter) return false;
