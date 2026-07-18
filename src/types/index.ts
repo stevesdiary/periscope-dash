@@ -116,6 +116,12 @@ export interface RevenueSummary {
   commission: number; refunds: number; outstanding: number;
   currency: string; byApp: RevenueRecord[];
 }
+export interface FailedPayment {
+  id: string; businessId: string; businessName: string;
+  amount: number; currency: string; reason: string;
+  failedAt: string; retryable: boolean;
+  appKey: string; appName: string;
+}
 
 // Users
 export interface UserRecord {

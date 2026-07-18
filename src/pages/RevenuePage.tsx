@@ -15,15 +15,35 @@ const PLAN_DATA = [
   { plan: 'Starter', mrr: 21000 },
 ];
 
-const FAILED_PAYMENTS = [
-  { business: 'Northgate Schools', amount: 3400, reason: 'card_declined', time: '22m ago' },
-  { business: 'Havenwood Clinic', amount: 1200, reason: 'insufficient_funds', time: '2h ago' },
-  { business: 'Oakmount Estate', amount: 800, reason: 'card_expired', time: '5h ago' },
+type FailedPaymentRow = {
+  id: string; business: string; amount: number; currency: string;
+  reason: string; time: string; retryable: boolean;
+};
+
+const FAILED_PAYMENTS: FailedPaymentRow[] = [
+  { id: 'm1', business: 'Northgate Schools', amount: 3400, currency: 'NGN', reason: 'card_declined', time: '22m ago', retryable: true },
+  { id: 'm2', business: 'Havenwood Clinic', amount: 1200, currency: 'NGN', reason: 'insufficient_funds', time: '2h ago', retryable: true },
+  { id: 'm3', business: 'Oakmount Estate', amount: 800, currency: 'NGN', reason: 'card_expired', time: '5h ago', retryable: false },
 ];
+
+const CURRENCY_SYMBOL: Record<string, string> = { NGN: '₦', USD: '$', GBP: '£', EUR: '€' };
+function fmtMoney(amount: number, currency = 'NGN') {
+  return `${CURRENCY_SYMBOL[currency] ?? ''}${amount.toLocaleString()}`;
+}
 
 function fmtDate(s: string | null) {
   if (!s) return '—';
   return new Date(s).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
 }
 
 function fmtTick(iso: string) {
@@ -49,9 +69,23 @@ export function RevenuePage() {
   const [kpi, setKpi] = useState<{ mrr: number; arr: number; failed: number } | null>(null);
   const [mrrTrend, setMrrTrend] = useState<Record<string, string | number>[]>(MOCK_MRR_TREND);
   const [planData, setPlanData] = useState(PLAN_DATA);
+  const [failedPayments, setFailedPayments] = useState<FailedPaymentRow[]>(FAILED_PAYMENTS);
 
   useEffect(() => {
     api.getSubscriptions().then(setAllSubs).catch(() => { /* keep mock */ });
+    api.getFailedPayments({ limit: 20 })
+      .then(rows => {
+        if (rows.length) setFailedPayments(rows.map(r => ({
+          id: r.id,
+          business: r.businessName,
+          amount: r.amount,
+          currency: r.currency,
+          reason: r.reason,
+          time: relativeTime(r.failedAt),
+          retryable: r.retryable,
+        })));
+      })
+      .catch(() => { /* keep mock */ });
     Promise.all([api.getSubscriptionsSummary(), api.getDashboard()])
       .then(([s, d]) => {
         setKpi({ mrr: s.mrr, arr: s.arr, failed: d.kpis.failedPayments });
@@ -208,15 +242,19 @@ export function RevenuePage() {
         <div className="card p-4">
           <h2 className="text-sm font-semibold text-on-surface mb-3">Failed payments</h2>
           <div className="space-y-3">
-            {FAILED_PAYMENTS.map((p, i) => (
-              <div key={i} className="flex items-start justify-between gap-3 pb-3 border-b border-outline last:border-0 last:pb-0">
+            {failedPayments.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted">No failed payments</p>
+            ) : failedPayments.map(p => (
+              <div key={p.id} className="flex items-start justify-between gap-3 pb-3 border-b border-outline last:border-0 last:pb-0">
                 <div>
                   <p className="text-sm font-medium text-on-surface">{p.business}</p>
                   <p className="text-xs text-muted">{p.reason} · {p.time}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="text-sm font-semibold tabular text-danger">${p.amount.toLocaleString()}</p>
-                  <button className="text-xs text-primary hover:underline">Retry</button>
+                  <p className="text-sm font-semibold tabular text-danger">{fmtMoney(p.amount, p.currency)}</p>
+                  {p.retryable
+                    ? <button className="text-xs text-primary hover:underline">Retry</button>
+                    : <span className="text-xs text-muted">Non-retryable</span>}
                 </div>
               </div>
             ))}
