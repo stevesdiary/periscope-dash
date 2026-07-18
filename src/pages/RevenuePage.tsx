@@ -6,7 +6,7 @@ import { AppTag } from '../components/ui/AppTag';
 import { MOCK_MRR_TREND, MOCK_SUBSCRIPTIONS } from '../lib/mockData';
 import { api } from '../api/client';
 import { PRODUCT_COLORS } from '../types';
-import type { SubscriptionRecord } from '../types';
+import type { SubscriptionRecord, MetricSnapshot } from '../types';
 import { clsx } from 'clsx';
 
 const PLAN_DATA = [
@@ -26,6 +26,19 @@ function fmtDate(s: string | null) {
   return new Date(s).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
+function fmtTick(iso: string) {
+  return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+}
+
+/** Reshape KPI snapshots into per-product MRR rows the area chart expects. */
+function toMrrTrend(snapshots: MetricSnapshot[]) {
+  return snapshots.map(s => {
+    const row: Record<string, string | number> = { month: fmtTick(s.capturedAt) };
+    for (const a of s.perApp) row[a.key] = a.mrr;
+    return row;
+  });
+}
+
 type Range = '30d' | 'QTD' | 'YTD';
 type SubFilter = 'all' | 'active' | 'past_due' | 'cancelled' | 'trialing';
 
@@ -34,12 +47,22 @@ export function RevenuePage() {
   const [subFilter, setSubFilter] = useState<SubFilter>('all');
   const [allSubs, setAllSubs] = useState<SubscriptionRecord[]>(MOCK_SUBSCRIPTIONS);
   const [kpi, setKpi] = useState<{ mrr: number; arr: number; failed: number } | null>(null);
+  const [mrrTrend, setMrrTrend] = useState<Record<string, string | number>[]>(MOCK_MRR_TREND);
+  const [planData, setPlanData] = useState(PLAN_DATA);
 
   useEffect(() => {
     api.getSubscriptions().then(setAllSubs).catch(() => { /* keep mock */ });
     Promise.all([api.getSubscriptionsSummary(), api.getDashboard()])
-      .then(([s, d]) => setKpi({ mrr: s.mrr, arr: s.arr, failed: d.kpis.failedPayments }))
+      .then(([s, d]) => {
+        setKpi({ mrr: s.mrr, arr: s.arr, failed: d.kpis.failedPayments });
+        if (s.planBreakdown?.length) {
+          setPlanData(s.planBreakdown.map(p => ({ plan: p.plan, mrr: p.mrr })));
+        }
+      })
       .catch(() => { /* keep static */ });
+    api.getDashboardHistory({ limit: 500 })
+      .then(({ snapshots }) => { if (snapshots.length) setMrrTrend(toMrrTrend(snapshots)); })
+      .catch(() => { /* keep mock trend */ });
   }, []);
 
   const subs = subFilter === 'all' ? allSubs : allSubs.filter(s => s.status === subFilter);
@@ -97,7 +120,7 @@ export function RevenuePage() {
           <h2 className="text-sm font-semibold text-on-surface mb-4">MRR trend by product</h2>
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={MOCK_MRR_TREND} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+              <AreaChart data={mrrTrend} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
                 <defs>
                   {Object.entries(PRODUCT_COLORS).map(([key, color]) => (
                     <linearGradient key={key} id={`rev-grad-${key}`} x1="0" y1="0" x2="0" y2="1">
@@ -124,7 +147,7 @@ export function RevenuePage() {
           <h2 className="text-sm font-semibold text-on-surface mb-4">MRR by plan</h2>
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={PLAN_DATA} layout="vertical" margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+              <BarChart data={planData} layout="vertical" margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" horizontal={false} />
                 <XAxis type="number" tickFormatter={v => `$${v / 1000}k`} tick={{ fontSize: 11, fill: '#94A3B8' }} axisLine={false} tickLine={false} />
                 <YAxis type="category" dataKey="plan" tick={{ fontSize: 12, fill: '#475569' }} axisLine={false} tickLine={false} width={52} />
