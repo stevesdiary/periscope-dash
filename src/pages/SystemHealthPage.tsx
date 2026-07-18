@@ -5,7 +5,21 @@ import { StatusBadge } from '../components/ui/StatusBadge';
 import { MOCK_LATENCY_TREND } from '../lib/mockData';
 import { api } from '../api/client';
 import { PRODUCT_COLORS } from '../types';
+import type { MetricSnapshot } from '../types';
 import { clsx } from 'clsx';
+
+function fmtTick(iso: string) {
+  return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+}
+
+/** Reshape KPI snapshots into per-product latency rows the line chart expects. */
+function toLatencyTrend(snapshots: MetricSnapshot[]) {
+  return snapshots.map(s => {
+    const row: Record<string, string | number> = { time: fmtTick(s.capturedAt) };
+    for (const a of s.perApp) row[a.key] = Math.round(a.avgResponseTimeMs);
+    return row;
+  });
+}
 
 type Service = {
   key: string; name: string; status: string; uptime: string;
@@ -32,6 +46,13 @@ export function SystemHealthPage() {
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [alerts, setAlerts] = useState(ALERTS);
   const [services, setServices] = useState<Service[]>(SERVICES);
+  const [latencyTrend, setLatencyTrend] = useState<Record<string, string | number>[]>(MOCK_LATENCY_TREND);
+
+  useEffect(() => {
+    api.getDashboardHistory({ limit: 500 })
+      .then(({ snapshots }) => { if (snapshots.length) setLatencyTrend(toLatencyTrend(snapshots)); })
+      .catch(() => { /* keep mock trend */ });
+  }, []);
 
   useEffect(() => {
     Promise.all([api.getDashboard(), api.getMetrics().catch(() => null)])
@@ -131,15 +152,15 @@ export function SystemHealthPage() {
           <h2 className="text-sm font-semibold text-on-surface mb-4">Response time (last 60 min)</h2>
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={MOCK_LATENCY_TREND} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+              <LineChart data={latencyTrend} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" vertical={false} />
                 <XAxis dataKey="time" tick={{ fontSize: 11, fill: '#94A3B8' }} axisLine={false} tickLine={false} />
                 <YAxis tickFormatter={v => `${v}ms`} tick={{ fontSize: 11, fill: '#94A3B8' }} axisLine={false} tickLine={false} width={44} />
                 <Tooltip formatter={(v: unknown) => [`${Number(v)}ms`, '']} contentStyle={{ borderRadius: 8, border: '1px solid #E5E7EB', fontSize: 12 }} />
                 <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: 12 }} />
-                {['estate', 'logistics', 'school', 'esusu'].map(key => (
+                {Object.keys(PRODUCT_COLORS).map(key => (
                   <Line key={key} type="monotone" dataKey={key} name={key.charAt(0).toUpperCase() + key.slice(1)}
-                    stroke={PRODUCT_COLORS[key]} strokeWidth={2} dot={false} />
+                    stroke={PRODUCT_COLORS[key]} strokeWidth={2} dot={false} connectNulls />
                 ))}
               </LineChart>
             </ResponsiveContainer>

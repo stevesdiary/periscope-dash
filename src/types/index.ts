@@ -126,6 +126,36 @@ export interface UserRecord {
   appKey: string; appName: string;
 }
 
+// Dashboard KPI history (trend charts)
+export interface SnapshotPerApp {
+  key: string;
+  name: string;
+  mrr: number;
+  avgResponseTimeMs: number;
+  systemHealth: 'healthy' | 'degraded' | 'down';
+  failedPayments: number;
+}
+export interface MetricSnapshot {
+  id: number;
+  capturedAt: string;
+  mrr: number;
+  arr: number;
+  monthlyRevenue: number;
+  todayRevenue: number;
+  businesses: number;
+  activeBusinesses: number;
+  users: number;
+  activeSubscriptions: number;
+  failedPayments: number;
+  todaySignups: number;
+  avgResponseTimeMs: number;
+  systemHealth: 'healthy' | 'degraded' | 'down';
+  perApp: SnapshotPerApp[];
+}
+export interface DashboardHistory {
+  snapshots: MetricSnapshot[];
+}
+
 // Monitoring
 export interface PlatformMetrics {
   uptime: number; requestCount: number; errorCount: number;
