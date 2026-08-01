@@ -58,7 +58,6 @@ export default {
         'estate-color': '#4F46E5',
         'logistics-color': '#0EA5E9',
         'school-color': '#16A34A',
-        'esusu-color': '#D97706',
         'hospital-color': '#DC2626',
       },
       fontFamily: {

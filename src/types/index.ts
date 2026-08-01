@@ -207,7 +207,6 @@ export const PRODUCT_COLORS: Record<string, string> = {
   estate: '#4F46E5',
   logistics: '#0EA5E9',
   school: '#16A34A',
-  esusu: '#D97706',
   hospital: '#DC2626',
 };
 
@@ -215,6 +214,5 @@ export const PRODUCT_NAMES: Record<string, string> = {
   estate: 'Estate',
   logistics: 'Logistics',
   school: 'School',
-  esusu: 'esusu',
   hospital: 'Hospital',
 };
