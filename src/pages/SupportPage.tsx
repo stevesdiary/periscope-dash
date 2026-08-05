@@ -1,183 +1,235 @@
-import { useState } from 'react';
-import { Send, Lock } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { UserCog, Link2, LogOut, Search, Copy, Check, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { StatusBadge } from '../components/ui/StatusBadge';
-import { MOCK_SUPPORT_TICKETS } from '../lib/mockData';
-import { clsx } from 'clsx';
+import { MOCK_USERS } from '../lib/mockData';
+import { api } from '../api/client';
 
-const PRIORITY_COLORS: Record<string, string> = {
-  high: 'bg-danger',
-  medium: 'bg-warning',
-  low: 'bg-muted',
-};
+type UserRow = typeof MOCK_USERS[0];
 
-type TabFilter = 'open' | 'pending' | 'closed';
+function relativeTime(iso: string | null): string {
+  if (!iso) return '—';
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+
+type ToolState = { loading: boolean; error: string | null; result: string | null };
+const IDLE: ToolState = { loading: false, error: null, result: null };
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); }}
+      className="flex items-center gap-1 text-xs text-primary hover:underline flex-shrink-0"
+    >
+      {copied ? <Check size={11} /> : <Copy size={11} />}{copied ? 'Copied' : 'Copy'}
+    </button>
+  );
+}
 
 export function SupportPage() {
-  const [tab, setTab] = useState<TabFilter>('open');
-  const [selected, setSelected] = useState(MOCK_SUPPORT_TICKETS[0]);
-  const [reply, setReply] = useState('');
-  const [isInternal, setIsInternal] = useState(false);
+  const [users, setUsers] = useState<UserRow[]>(MOCK_USERS);
+  const [search, setSearch] = useState('');
 
-  const tickets = MOCK_SUPPORT_TICKETS.filter(t => tab === 'open' ? t.status === 'open' : tab === 'pending' ? t.status === 'pending' : t.status === 'closed');
+  // Tool inputs
+  const [magicEmail, setMagicEmail] = useState('');
+  const [impersonateId, setImpersonateId] = useState('');
+  const [logoutId, setLogoutId] = useState('');
+
+  // Tool state
+  const [magic, setMagic] = useState<ToolState>(IDLE);
+  const [impersonate, setImpersonate] = useState<ToolState>(IDLE);
+  const [forceLogout, setForceLogout] = useState<ToolState>(IDLE);
+
+  useEffect(() => {
+    api.getUsers()
+      .then(rows => setUsers(rows.map(u => ({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        business: u.businessName ?? '—',
+        businessId: u.businessId ?? '',
+        applications: [u.appKey],
+        role: u.role,
+        status: u.status,
+        lastActive: relativeTime(u.lastLoginAt),
+      }))))
+      .catch(() => { /* keep mock */ });
+  }, []);
+
+  const filtered = users.filter(u =>
+    !search ||
+    u.name.toLowerCase().includes(search.toLowerCase()) ||
+    u.email.toLowerCase().includes(search.toLowerCase()) ||
+    u.business.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const errMsg = (e: unknown) =>
+    (e as { error?: { message?: string }; message?: string })?.error?.message
+    ?? (e as { message?: string })?.message ?? 'Request failed';
+
+  const runMagicLink = () => {
+    if (!magicEmail) return;
+    setMagic({ loading: true, error: null, result: null });
+    api.magicLink(magicEmail)
+      .then(r => setMagic({ loading: false, error: null, result: `${r.magicToken}  ·  expires in ${r.expiresIn}` }))
+      .catch(e => setMagic({ loading: false, error: errMsg(e), result: null }));
+  };
+
+  const runImpersonate = () => {
+    const id = Number(impersonateId);
+    if (!id) return;
+    setImpersonate({ loading: true, error: null, result: null });
+    api.impersonate(id)
+      .then(r => setImpersonate({ loading: false, error: null, result: `${r.readOnly ? 'read-only' : 'read-write'} session · expires in ${r.expiresIn}\n${r.accessToken}` }))
+      .catch(e => setImpersonate({ loading: false, error: errMsg(e), result: null }));
+  };
+
+  const runForceLogout = () => {
+    const id = Number(logoutId);
+    if (!id) return;
+    setForceLogout({ loading: true, error: null, result: null });
+    api.forceLogout(id)
+      .then(r => setForceLogout({ loading: false, error: null, result: r.loggedOut ? `Logged out · ${r.sessionsRevoked} session(s) revoked` : 'No active sessions' }))
+      .catch(e => setForceLogout({ loading: false, error: errMsg(e), result: null }));
+  };
 
   return (
-    <div className="flex h-[calc(100vh-56px)] overflow-hidden">
-      {/* Left: ticket list */}
-      <div className="w-full lg:w-[380px] flex-shrink-0 border-r border-outline flex flex-col bg-white">
-        <div className="px-4 py-3 border-b border-outline">
-          <h1 className="text-base font-semibold text-on-surface mb-2">Support tickets</h1>
-          <div className="flex rounded-lg border border-outline overflow-hidden bg-surface-container-low">
-            {(['open', 'pending', 'closed'] as TabFilter[]).map(t => (
-              <button key={t} onClick={() => setTab(t)}
-                className={clsx('flex-1 h-7 text-xs font-medium capitalize transition-colors',
-                  tab === t ? 'bg-primary text-white' : 'text-on-surface-variant hover:bg-surface-container'
-                )}>
-                {t}
-                <span className={clsx('ml-1 px-1 rounded-full text-[10px]',
-                  tab === t ? 'bg-white/20 text-white' : 'bg-surface-container text-muted'
-                )}>
-                  {MOCK_SUPPORT_TICKETS.filter(tk => tk.status === t).length}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
+    <div className="p-6 space-y-6 max-w-[1400px] mx-auto">
+      <div>
+        <h1 className="text-2xl font-semibold text-on-surface">Support Console</h1>
+        <p className="text-sm text-muted mt-0.5">Impersonate, issue magic links and force-logout — every action is audited.</p>
+      </div>
 
-        <div className="flex-1 overflow-y-auto divide-y divide-outline">
-          {tickets.length === 0 ? (
-            <div className="py-12 text-center text-sm text-muted">No {tab} tickets</div>
-          ) : tickets.map(t => (
-            <div key={t.id} onClick={() => setSelected(t)}
-              className={clsx('px-4 py-3 cursor-pointer hover:bg-surface-container-low transition-colors',
-                selected?.id === t.id && 'bg-primary-tint/30 border-l-2 border-primary'
-              )}>
-              <div className="flex items-start gap-2.5">
-                <span className={clsx('w-2 h-2 rounded-full mt-1.5 flex-shrink-0', PRIORITY_COLORS[t.priority])} />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-medium text-on-surface truncate">{t.subject}</p>
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      {t.unread && <span className="w-2 h-2 rounded-full bg-primary" />}
-                      <span className="text-xs text-muted">{t.time}</span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-on-surface-variant truncate">{t.business}</p>
-                  <p className="text-xs text-muted truncate">{t.requester}</p>
-                </div>
+      {/* Tool cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        {/* Magic link */}
+        <div className="card p-5 flex flex-col">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-8 h-8 rounded-lg bg-primary-tint flex items-center justify-center flex-shrink-0">
+              <Link2 size={16} className="text-primary" />
+            </div>
+            <h2 className="text-sm font-semibold text-on-surface">Send magic link</h2>
+          </div>
+          <p className="text-xs text-muted mb-3">Issue a one-time sign-in link to a user by email.</p>
+          <input value={magicEmail} onChange={e => setMagicEmail(e.target.value)} type="email"
+            placeholder="user@business.com"
+            className="h-8 px-3 rounded-lg border border-outline bg-white text-sm placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary mb-2" />
+          <button onClick={runMagicLink} disabled={!magicEmail || magic.loading}
+            className="btn-primary h-8 text-xs gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed">
+            <Link2 size={13} />{magic.loading ? 'Sending…' : 'Generate link'}
+          </button>
+          {magic.error && <p className="mt-2 text-xs text-danger flex items-center gap-1"><AlertTriangle size={11} />{magic.error}</p>}
+          {magic.result && (
+            <div className="mt-2 p-2 rounded-lg bg-surface-container-low border border-outline">
+              <div className="flex items-start justify-between gap-2">
+                <code className="text-[10px] font-mono text-on-surface break-all">{magic.result}</code>
+                <CopyButton text={magic.result.split('  ·  ')[0]} />
               </div>
             </div>
-          ))}
+          )}
+        </div>
+
+        {/* Impersonate */}
+        <div className="card p-5 flex flex-col">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-8 h-8 rounded-lg bg-warning-bg flex items-center justify-center flex-shrink-0">
+              <UserCog size={16} className="text-warning" />
+            </div>
+            <h2 className="text-sm font-semibold text-on-surface">Impersonate</h2>
+          </div>
+          <p className="text-xs text-muted mb-3">Open a scoped, read-only session as another admin.</p>
+          <input value={impersonateId} onChange={e => setImpersonateId(e.target.value.replace(/\D/g, ''))} inputMode="numeric"
+            placeholder="Admin ID"
+            className="h-8 px-3 rounded-lg border border-outline bg-white text-sm placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary mb-2" />
+          <button onClick={runImpersonate} disabled={!impersonateId || impersonate.loading}
+            className="btn-secondary h-8 text-xs gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed">
+            <UserCog size={13} />{impersonate.loading ? 'Starting…' : 'Start session'}
+          </button>
+          {impersonate.error && <p className="mt-2 text-xs text-danger flex items-center gap-1"><AlertTriangle size={11} />{impersonate.error}</p>}
+          {impersonate.result && (
+            <div className="mt-2 p-2 rounded-lg bg-surface-container-low border border-outline">
+              <div className="flex items-start justify-between gap-2">
+                <code className="text-[10px] font-mono text-on-surface break-all whitespace-pre-wrap">{impersonate.result}</code>
+                <CopyButton text={impersonate.result.split('\n')[1] ?? impersonate.result} />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Force logout */}
+        <div className="card p-5 flex flex-col">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="w-8 h-8 rounded-lg bg-danger-bg flex items-center justify-center flex-shrink-0">
+              <LogOut size={16} className="text-danger" />
+            </div>
+            <h2 className="text-sm font-semibold text-on-surface">Force logout</h2>
+          </div>
+          <p className="text-xs text-muted mb-3">Revoke every active session for an admin immediately.</p>
+          <input value={logoutId} onChange={e => setLogoutId(e.target.value.replace(/\D/g, ''))} inputMode="numeric"
+            placeholder="Admin ID"
+            className="h-8 px-3 rounded-lg border border-outline bg-white text-sm placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary mb-2" />
+          <button onClick={runForceLogout} disabled={!logoutId || forceLogout.loading}
+            className="h-8 text-xs gap-1.5 inline-flex items-center justify-center rounded-lg font-medium bg-danger text-white hover:bg-danger/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            <LogOut size={13} />{forceLogout.loading ? 'Revoking…' : 'Force logout'}
+          </button>
+          {forceLogout.error && <p className="mt-2 text-xs text-danger flex items-center gap-1"><AlertTriangle size={11} />{forceLogout.error}</p>}
+          {forceLogout.result && (
+            <p className="mt-2 text-xs text-success flex items-center gap-1"><ShieldCheck size={11} />{forceLogout.result}</p>
+          )}
         </div>
       </div>
 
-      {/* Right: detail */}
-      <div className="flex-1 flex flex-col min-w-0 bg-background">
-        {!selected ? (
-          <div className="flex-1 flex items-center justify-center text-center p-8">
-            <div>
-              <div className="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center mx-auto mb-3">
-                <Send size={20} className="text-muted" />
-              </div>
-              <p className="text-sm font-medium text-on-surface">Select a ticket to view details</p>
-            </div>
+      {/* User directory */}
+      <div className="card overflow-hidden">
+        <div className="flex items-center justify-between gap-4 px-4 py-3 border-b border-outline flex-wrap">
+          <h2 className="text-sm font-semibold text-on-surface">User directory</h2>
+          <div className="relative">
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted" />
+            <input value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Search name, email, business…"
+              className="h-8 pl-8 pr-3 rounded-lg border border-outline bg-white text-sm placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary w-64" />
           </div>
-        ) : (
-          <>
-            {/* Ticket header */}
-            <div className="bg-white border-b border-outline px-5 py-3 flex items-start justify-between gap-4 flex-wrap">
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className={clsx('w-2 h-2 rounded-full flex-shrink-0', PRIORITY_COLORS[selected.priority])} />
-                  <h2 className="text-base font-semibold text-on-surface">{selected.subject}</h2>
-                  <span className={clsx('px-2 py-0.5 rounded-full text-xs font-medium capitalize',
-                    selected.priority === 'high' ? 'bg-danger-bg text-danger' :
-                    selected.priority === 'medium' ? 'bg-warning-bg text-warning' : 'bg-surface-container text-muted'
-                  )}>
-                    {selected.priority}
-                  </span>
-                </div>
-                <p className="text-xs text-muted mt-0.5">{selected.requester} · {selected.time}</p>
-              </div>
-              <select className="h-8 px-3 rounded-lg border border-outline bg-white text-sm text-on-surface focus:outline-none">
-                <option>Open</option>
-                <option>Pending</option>
-                <option>Closed</option>
-              </select>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-5 space-y-4">
-              {/* Business context card */}
-              <div className="card p-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted mb-3">Business context</p>
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-sm font-semibold text-on-surface">{selected.business}</p>
-                    <p className="text-xs font-mono text-muted">{selected.businessId}</p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <StatusBadge status="active" />
-                      <span className="text-xs text-on-surface-variant">Growth plan · $2,000 MRR</span>
-                    </div>
-                  </div>
-                  <button className="text-xs text-primary hover:underline flex-shrink-0">View business →</button>
-                </div>
-              </div>
-
-              {/* Messages */}
-              <div className="space-y-3">
-                {selected.messages.map((msg, i) => (
-                  <div key={i} className={clsx('flex gap-3', msg.from.includes('periscope') && 'flex-row-reverse')}>
-                    <div className="w-7 h-7 rounded-full bg-primary-tint flex items-center justify-center text-primary text-xs font-semibold flex-shrink-0">
-                      {msg.from[0].toUpperCase()}
-                    </div>
-                    <div className={clsx('max-w-[75%]', msg.from.includes('periscope') && 'items-end flex flex-col')}>
-                      <div className={clsx('px-3 py-2.5 rounded-xl text-sm',
-                        msg.internal ? 'bg-warning-bg border border-warning/20 text-on-surface' :
-                        msg.from.includes('periscope') ? 'bg-primary text-white' : 'bg-white border border-outline text-on-surface'
-                      )}>
-                        {msg.internal && (
-                          <div className="flex items-center gap-1 text-xs text-warning font-medium mb-1">
-                            <Lock size={10} />Internal note
-                          </div>
-                        )}
-                        {msg.text}
-                      </div>
-                      <p className="text-[10px] text-muted mt-1">{msg.from} · {msg.time}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Reply composer */}
-            <div className="bg-white border-t border-outline p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <button onClick={() => setIsInternal(false)}
-                  className={clsx('px-3 h-7 rounded-lg text-xs font-medium transition-colors',
-                    !isInternal ? 'bg-primary text-white' : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container'
-                  )}>
-                  Reply
-                </button>
-                <button onClick={() => setIsInternal(true)}
-                  className={clsx('px-3 h-7 rounded-lg text-xs font-medium transition-colors flex items-center gap-1',
-                    isInternal ? 'bg-warning-bg text-warning border border-warning/20' : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container'
-                  )}>
-                  <Lock size={10} />Internal note
-                </button>
-              </div>
-              <div className="flex gap-2">
-                <textarea value={reply} onChange={e => setReply(e.target.value)}
-                  placeholder={isInternal ? 'Add an internal note…' : 'Write a reply…'}
-                  rows={2}
-                  className={clsx('flex-1 px-3 py-2 rounded-lg border text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20',
-                    isInternal ? 'border-warning/30 bg-warning-bg/30' : 'border-outline bg-white'
-                  )} />
-                <button className="btn-primary self-end px-3">
-                  <Send size={14} />
-                </button>
-              </div>
-            </div>
-          </>
-        )}
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="table-header">
+                <th className="table-cell py-2.5 text-left">User</th>
+                <th className="table-cell py-2.5 text-left">Business</th>
+                <th className="table-cell py-2.5 text-left">Role</th>
+                <th className="table-cell py-2.5 text-left">Status</th>
+                <th className="table-cell py-2.5 text-left">Last active</th>
+                <th className="table-cell py-2.5 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr><td colSpan={6} className="py-12 text-center text-sm text-muted">No users match your search</td></tr>
+              ) : filtered.map(u => (
+                <tr key={u.id} className="table-row">
+                  <td className="table-cell">
+                    <p className="font-medium text-on-surface">{u.name}</p>
+                    <p className="text-xs text-muted">{u.email}</p>
+                  </td>
+                  <td className="table-cell text-on-surface-variant text-xs">{u.business}</td>
+                  <td className="table-cell text-on-surface-variant">{u.role}</td>
+                  <td className="table-cell"><StatusBadge status={u.status as any} /></td>
+                  <td className="table-cell text-on-surface-variant text-xs">{u.lastActive}</td>
+                  <td className="table-cell text-right">
+                    <button onClick={() => { setMagicEmail(u.email); setMagic(IDLE); }}
+                      className="text-xs text-primary hover:underline">Magic link</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Download, TrendingUp, TrendingDown } from 'lucide-react';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { AppTag } from '../components/ui/AppTag';
 import { MOCK_MRR_TREND, MOCK_SUBSCRIPTIONS } from '../lib/mockData';
+import { api } from '../api/client';
 import { PRODUCT_COLORS } from '../types';
+import type { SubscriptionRecord, MetricSnapshot } from '../types';
 import { clsx } from 'clsx';
 
 const PLAN_DATA = [
@@ -13,15 +15,48 @@ const PLAN_DATA = [
   { plan: 'Starter', mrr: 21000 },
 ];
 
-const FAILED_PAYMENTS = [
-  { business: 'Northgate Schools', amount: 3400, reason: 'card_declined', time: '22m ago' },
-  { business: 'Havenwood Clinic', amount: 1200, reason: 'insufficient_funds', time: '2h ago' },
-  { business: 'Oakmount Estate', amount: 800, reason: 'card_expired', time: '5h ago' },
+type FailedPaymentRow = {
+  id: string; business: string; amount: number; currency: string;
+  reason: string; time: string; retryable: boolean;
+};
+
+const FAILED_PAYMENTS: FailedPaymentRow[] = [
+  { id: 'm1', business: 'Northgate Schools', amount: 3400, currency: 'NGN', reason: 'card_declined', time: '22m ago', retryable: true },
+  { id: 'm2', business: 'Havenwood Clinic', amount: 1200, currency: 'NGN', reason: 'insufficient_funds', time: '2h ago', retryable: true },
+  { id: 'm3', business: 'Oakmount Estate', amount: 800, currency: 'NGN', reason: 'card_expired', time: '5h ago', retryable: false },
 ];
+
+const CURRENCY_SYMBOL: Record<string, string> = { NGN: '₦', USD: '$', GBP: '£', EUR: '€' };
+function fmtMoney(amount: number, currency = 'NGN') {
+  return `${CURRENCY_SYMBOL[currency] ?? ''}${amount.toLocaleString()}`;
+}
 
 function fmtDate(s: string | null) {
   if (!s) return '—';
   return new Date(s).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+
+function fmtTick(iso: string) {
+  return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+}
+
+/** Reshape KPI snapshots into per-product MRR rows the area chart expects. */
+function toMrrTrend(snapshots: MetricSnapshot[]) {
+  return snapshots.map(s => {
+    const row: Record<string, string | number> = { month: fmtTick(s.capturedAt) };
+    for (const a of s.perApp) row[a.key] = a.mrr;
+    return row;
+  });
 }
 
 type Range = '30d' | 'QTD' | 'YTD';
@@ -30,8 +65,41 @@ type SubFilter = 'all' | 'active' | 'past_due' | 'cancelled' | 'trialing';
 export function RevenuePage() {
   const [range, setRange] = useState<Range>('30d');
   const [subFilter, setSubFilter] = useState<SubFilter>('all');
+  const [allSubs, setAllSubs] = useState<SubscriptionRecord[]>(MOCK_SUBSCRIPTIONS);
+  const [kpi, setKpi] = useState<{ mrr: number; arr: number; failed: number } | null>(null);
+  const [mrrTrend, setMrrTrend] = useState<Record<string, string | number>[]>(MOCK_MRR_TREND);
+  const [planData, setPlanData] = useState(PLAN_DATA);
+  const [failedPayments, setFailedPayments] = useState<FailedPaymentRow[]>(FAILED_PAYMENTS);
 
-  const subs = subFilter === 'all' ? MOCK_SUBSCRIPTIONS : MOCK_SUBSCRIPTIONS.filter(s => s.status === subFilter);
+  useEffect(() => {
+    api.getSubscriptions().then(setAllSubs).catch(() => { /* keep mock */ });
+    api.getFailedPayments({ limit: 20 })
+      .then(rows => {
+        if (rows.length) setFailedPayments(rows.map(r => ({
+          id: r.id,
+          business: r.businessName,
+          amount: r.amount,
+          currency: r.currency,
+          reason: r.reason,
+          time: relativeTime(r.failedAt),
+          retryable: r.retryable,
+        })));
+      })
+      .catch(() => { /* keep mock */ });
+    Promise.all([api.getSubscriptionsSummary(), api.getDashboard()])
+      .then(([s, d]) => {
+        setKpi({ mrr: s.mrr, arr: s.arr, failed: d.kpis.failedPayments });
+        if (s.planBreakdown?.length) {
+          setPlanData(s.planBreakdown.map(p => ({ plan: p.plan, mrr: p.mrr })));
+        }
+      })
+      .catch(() => { /* keep static */ });
+    api.getDashboardHistory({ limit: 500 })
+      .then(({ snapshots }) => { if (snapshots.length) setMrrTrend(toMrrTrend(snapshots)); })
+      .catch(() => { /* keep mock trend */ });
+  }, []);
+
+  const subs = subFilter === 'all' ? allSubs : allSubs.filter(s => s.status === subFilter);
 
   return (
     <div className="p-6 space-y-6 max-w-[1400px] mx-auto">
@@ -58,10 +126,10 @@ export function RevenuePage() {
       {/* KPI row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'MRR', value: '$120,000', delta: { v: '6.4%', pos: true } },
-          { label: 'ARR', value: '$1.44M', delta: null },
+          { label: 'MRR', value: kpi ? `$${kpi.mrr.toLocaleString()}` : '$120,000', delta: { v: '6.4%', pos: true } },
+          { label: 'ARR', value: kpi ? `$${Math.round(kpi.arr).toLocaleString()}` : '$1.44M', delta: null },
           { label: 'Net new MRR', value: '$7,200', delta: { v: '12%', pos: true } },
-          { label: 'Failed payments', value: '8', delta: { v: '2', pos: false }, danger: true },
+          { label: 'Failed payments', value: kpi ? String(kpi.failed) : '8', delta: { v: '2', pos: false }, danger: true },
         ].map(({ label, value, delta, danger }) => (
           <div key={label} className={clsx('card p-4', danger && 'border-danger/30 bg-danger-bg/20')}>
             <p className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-2">{label}</p>
@@ -86,7 +154,7 @@ export function RevenuePage() {
           <h2 className="text-sm font-semibold text-on-surface mb-4">MRR trend by product</h2>
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={MOCK_MRR_TREND} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+              <AreaChart data={mrrTrend} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
                 <defs>
                   {Object.entries(PRODUCT_COLORS).map(([key, color]) => (
                     <linearGradient key={key} id={`rev-grad-${key}`} x1="0" y1="0" x2="0" y2="1">
@@ -113,7 +181,7 @@ export function RevenuePage() {
           <h2 className="text-sm font-semibold text-on-surface mb-4">MRR by plan</h2>
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={PLAN_DATA} layout="vertical" margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
+              <BarChart data={planData} layout="vertical" margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" horizontal={false} />
                 <XAxis type="number" tickFormatter={v => `$${v / 1000}k`} tick={{ fontSize: 11, fill: '#94A3B8' }} axisLine={false} tickLine={false} />
                 <YAxis type="category" dataKey="plan" tick={{ fontSize: 12, fill: '#475569' }} axisLine={false} tickLine={false} width={52} />
@@ -174,15 +242,19 @@ export function RevenuePage() {
         <div className="card p-4">
           <h2 className="text-sm font-semibold text-on-surface mb-3">Failed payments</h2>
           <div className="space-y-3">
-            {FAILED_PAYMENTS.map((p, i) => (
-              <div key={i} className="flex items-start justify-between gap-3 pb-3 border-b border-outline last:border-0 last:pb-0">
+            {failedPayments.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted">No failed payments</p>
+            ) : failedPayments.map(p => (
+              <div key={p.id} className="flex items-start justify-between gap-3 pb-3 border-b border-outline last:border-0 last:pb-0">
                 <div>
                   <p className="text-sm font-medium text-on-surface">{p.business}</p>
                   <p className="text-xs text-muted">{p.reason} · {p.time}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="text-sm font-semibold tabular text-danger">${p.amount.toLocaleString()}</p>
-                  <button className="text-xs text-primary hover:underline">Retry</button>
+                  <p className="text-sm font-semibold tabular text-danger">{fmtMoney(p.amount, p.currency)}</p>
+                  {p.retryable
+                    ? <button className="text-xs text-primary hover:underline">Retry</button>
+                    : <span className="text-xs text-muted">Non-retryable</span>}
                 </div>
               </div>
             ))}

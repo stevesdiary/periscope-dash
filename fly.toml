@@ -1,0 +1,18 @@
+app = "periscope-dash"
+primary_region = "lax"
+
+[build]
+  [build.args]
+    VITE_API_URL = "https://periscope-api.fly.dev"
+
+[http_service]
+  internal_port = 80
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 1
+
+[[vm]]
+  memory = "256mb"
+  cpu_kind = "shared"
+  cpus = 1
