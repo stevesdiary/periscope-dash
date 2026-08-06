@@ -6,7 +6,7 @@ import { MOCK_USERS } from '../lib/mockData';
 import { api } from '../api/client';
 import { clsx } from 'clsx';
 
-type AppFilter = 'all' | 'estate' | 'school' | 'hospital' | 'logistics' | 'esusu';
+type AppFilter = 'all' | 'estate' | 'school' | 'hospital' | 'logistics' | 'hospitality';
 type StatusFilter = 'all' | 'active' | 'invited' | 'inactive';
 type UserRow = typeof MOCK_USERS[0];
 
@@ -75,7 +75,7 @@ export function UsersPage() {
         <select value={appFilter} onChange={e => setAppFilter(e.target.value as AppFilter)}
           className="h-8 px-3 rounded-lg border border-outline bg-white text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20">
           <option value="all">All products</option>
-          {['estate', 'school', 'hospital', 'logistics', 'esusu'].map(a => (
+          {['estate', 'school', 'hospital', 'logistics', 'hospitality'].map(a => (
             <option key={a} value={a}>{a.charAt(0).toUpperCase() + a.slice(1)}</option>
           ))}
         </select>
