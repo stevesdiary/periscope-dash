@@ -3,7 +3,7 @@ import type {
   SubscriptionListItem, SubscriptionSummary, RevenueSummary, UserRecord,
   PlatformMetrics, AuditEvent, Notification, Session, FailedLogin, BlockedIP,
   AllowedIP, ImpersonateResponse, MagicLinkResponse, ForceLogoutResponse,
-  DashboardHistory, FailedPayment,
+  DashboardHistory, FailedPayment, LogisticsOverview,
 } from '../types';
 
 const BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:4000';
@@ -71,6 +71,9 @@ export const api = {
 
   // ---- Users ----
   getUsers: () => request<UserRecord[]>('/internal/users'),
+
+  // ---- Logistics ----
+  getLogistics: () => request<LogisticsOverview>('/internal/logistics'),
 
   // ---- Monitoring ----
   getMetrics: () => request<PlatformMetrics>('/internal/monitoring/metrics'),
