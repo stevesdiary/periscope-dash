@@ -50,7 +50,7 @@
       <div data-r="authside" style="flex:0 0 55%;background:linear-gradient(135deg,#EEF2FF 0%,#F7F8FA 60%,#FFFFFF 100%);display:flex;flex-direction:column;justify-content:center;padding:0 72px;position:relative">
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:56px">{{ apertureMark }}<span style="font-size:20px;font-weight:700;letter-spacing:-.02em">Periscope</span></div>
         <div style="font-size:44px;font-weight:600;line-height:1.1;letter-spacing:-.02em;max-width:520px;color:#0F172A">One command center for the whole portfolio</div>
-        <div style="font-size:16px;color:#475569;margin-top:20px;max-width:440px;line-height:1.6">Revenue, businesses, users, subscriptions and system health across Estate, School, Hospital, Logistics and esusu — in one place.</div>
+        <div style="font-size:16px;color:#475569;margin-top:20px;max-width:440px;line-height:1.6">Revenue, businesses, users, subscriptions and system health across Estate, School, Hospital, Logistics and Hospitality — in one place.</div>
         <div style="display:flex;gap:18px;margin-top:40px;align-items:center">
           <sc-for list="{{ productDots }}" as="p" hint-placeholder-count="5">
             <div style="display:flex;align-items:center;gap:7px"><span style="width:9px;height:9px;border-radius:50%;background:{{ p.color }};opacity:.55"></span><span style="font-size:12px;color:#94A3B8;font-weight:500">{{ p.name }}</span></div>
@@ -597,14 +597,14 @@ class Component extends DCLogic {
       logistics:{ key:'logistics', name:'Logistics', color:'#0D9488' },
       school:   { key:'school',    name:'School',    color:'#7C3AED' },
       hospital: { key:'hospital',  name:'Hospital',  color:'#E11D48' },
-      esusu:    { key:'esusu',     name:'esusu',     color:'#D97706' },
+      hospitality:    { key:'hospitality',     name:'Hospitality',     color:'#D97706' },
     };
     const applications = [
       { key:'estate', name:'Estate', businesses:142, activeBusinesses:128, users:3820, mrr:4250000, arr:51000000, activeSubscriptions:118, failedPayments:6, todaySignups:4, todayRevenue:182000, systemHealth:'healthy', avgResponseTimeMs:84 },
       { key:'logistics', name:'Logistics', businesses:63, activeBusinesses:58, users:1290, mrr:1980000, arr:23760000, activeSubscriptions:54, failedPayments:2, todaySignups:2, todayRevenue:96000, systemHealth:'healthy', avgResponseTimeMs:112 },
       { key:'school', name:'School', businesses:88, activeBusinesses:79, users:2450, mrr:2640000, arr:31680000, activeSubscriptions:74, failedPayments:3, todaySignups:5, todayRevenue:74000, systemHealth:'healthy', avgResponseTimeMs:97 },
       { key:'hospital', name:'Hospital', businesses:31, activeBusinesses:24, users:940, mrr:1120000, arr:13440000, activeSubscriptions:22, failedPayments:9, todaySignups:1, todayRevenue:41000, systemHealth:'degraded', avgResponseTimeMs:248 },
-      { key:'esusu', name:'esusu', businesses:0, activeBusinesses:0, users:0, mrr:0, arr:0, activeSubscriptions:0, failedPayments:0, todaySignups:0, todayRevenue:0, systemHealth:'down', avgResponseTimeMs:0, unavailable:true },
+      { key:'hospitality', name:'Hospitality', businesses:0, activeBusinesses:0, users:0, mrr:0, arr:0, activeSubscriptions:0, failedPayments:0, todaySignups:0, todayRevenue:0, systemHealth:'down', avgResponseTimeMs:0, unavailable:true },
     ];
     const avail = applications.filter(a=>!a.unavailable);
     const sum = f => avail.reduce((t,a)=>t+a[f],0);
@@ -1356,7 +1356,7 @@ class Component extends DCLogic {
           cardStyle: base+(a.unavailable?';opacity:.6':'') }; }),
       incidents:[
         {dot:'#DC2626',title:'Hospital API latency elevated',meta:'Started 42m ago · gateway p95 at 248ms',status:'Investigating',badgeStyle:this.badgeStyleStr('degraded')},
-        {dot:'#DC2626',title:'esusu data pipeline offline',meta:'Started 3h ago · snapshot job failing',status:'Down',badgeStyle:this.badgeStyleStr('down')},
+        {dot:'#DC2626',title:'Hospitality data pipeline offline',meta:'Started 3h ago · snapshot job failing',status:'Down',badgeStyle:this.badgeStyleStr('down')},
         {dot:'#16A34A',title:'Estate payment webhook recovered',meta:'Resolved 5h ago · duration 12m',status:'Resolved',badgeStyle:this.badgeStyleStr('active')},
       ],
     };

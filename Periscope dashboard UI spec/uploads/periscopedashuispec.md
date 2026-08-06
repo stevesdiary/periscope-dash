@@ -18,7 +18,7 @@ is done afterward by Claude Code against the seam in Section 4.
 Periscope is an **internal-only** Operations Platform (IOP) — a command center used by internal
 staff (super-admin, support, sales), never customers. It aggregates revenue, businesses, users,
 subscriptions, system health, support and security across a portfolio of SaaS products
-(**Estate, School, Hospital, Logistics, esusu**) by calling each product's private `/internal/*`
+(**Estate, School, Hospital, Logistics, Hospitality**) by calling each product's private `/internal/*`
 API through a gateway. Tone: calm, precise, data-dense, trustworthy — Stripe Dashboard × Linear
 (light) × Mercury.
 
@@ -92,7 +92,7 @@ label/eyebrow 12/500 uppercase `.04em` · numbers tabular.
 | `inactive`, `paused` | muted (grey) |
 
 **Product color dots** (stable per product key): `estate` indigo `#4F46E5` · `logistics` teal
-`#0D9488` · `school` violet `#7C3AED` · `hospital` rose `#E11D48` · `esusu` amber `#D97706`.
+`#0D9488` · `school` violet `#7C3AED` · `hospital` rose `#E11D48` · `hospitality` amber `#D97706`.
 Derive from the app `key`, with a neutral fallback for unknown keys.
 
 ---
