@@ -162,6 +162,81 @@ export interface DashboardHistory {
   snapshots: MetricSnapshot[];
 }
 
+// Logistics (GET /internal/logistics)
+export type ShipmentStatus = 'pending' | 'in_transit' | 'delivered' | 'delayed' | 'cancelled';
+export type VehicleStatus = 'active' | 'idle' | 'in_maintenance';
+
+export interface LogisticsShipment {
+  id: string;
+  trackingCode: string;
+  businessId: string;
+  businessName: string;
+  origin: string;
+  destination: string;
+  status: ShipmentStatus;
+  driverName: string | null;
+  vehiclePlate: string;
+  weightKg: number;
+  items: number;
+  revenue: number;
+  currency: string;
+  scheduledAt: string;
+  deliveredAt: string | null;
+}
+
+export interface LogisticsVehicle {
+  id: string;
+  plateNumber: string;
+  model: string;
+  status: VehicleStatus;
+  driverName: string | null;
+  lastActiveAt: string | null;
+}
+
+export interface LogisticsRoute {
+  id: string;
+  name: string;
+  stops: number;
+  distanceKm: number;
+  activeDeliveries: number;
+}
+
+export interface DeliveryTrendPoint {
+  day: string;
+  delivered: number;
+  in_transit: number;
+  delayed: number;
+}
+
+export interface OnTimeTrendPoint {
+  day: string;
+  rate: number;
+}
+
+export interface LogisticsOverview {
+  generatedAt: string;
+  systemHealth: 'healthy' | 'degraded' | 'down';
+  kpis: {
+    shipmentsToday: number;
+    deliveriesToday: number;
+    onTimeRate: number;
+    activeVehicles: number;
+    fleetSize: number;
+    activeDrivers: number;
+    inTransit: number;
+    delayed: number;
+    revenueToday: number;
+    revenueMtd: number;
+    mrr: number;
+    currency: string;
+  };
+  deliveriesTrend: DeliveryTrendPoint[];
+  onTimeTrend: OnTimeTrendPoint[];
+  shipments: LogisticsShipment[];
+  vehicles: LogisticsVehicle[];
+  routes: LogisticsRoute[];
+}
+
 // Monitoring
 export interface PlatformMetrics {
   uptime: number; requestCount: number; errorCount: number;
@@ -208,6 +283,7 @@ export const PRODUCT_COLORS: Record<string, string> = {
   logistics: '#0EA5E9',
   school: '#16A34A',
   hospital: '#DC2626',
+  hospitality: '#D97706',
 };
 
 export const PRODUCT_NAMES: Record<string, string> = {
@@ -215,4 +291,5 @@ export const PRODUCT_NAMES: Record<string, string> = {
   logistics: 'Logistics',
   school: 'School',
   hospital: 'Hospital',
+  hospitality: 'Hospitality',
 };

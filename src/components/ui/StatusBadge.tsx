@@ -1,6 +1,7 @@
 import { clsx } from 'clsx';
 
-type Status = 'active' | 'inactive' | 'suspended' | 'healthy' | 'degraded' | 'down' | 'past_due' | 'cancelled' | 'trialing' | 'paused' | 'invited';
+type Status = 'active' | 'inactive' | 'suspended' | 'healthy' | 'degraded' | 'down' | 'past_due' | 'cancelled' | 'trialing' | 'paused' | 'invited'
+  | 'pending' | 'in_transit' | 'delivered' | 'delayed' | 'idle' | 'in_maintenance';
 
 const MAP: Record<Status, string> = {
   active:    'bg-success-bg text-success',
@@ -14,6 +15,12 @@ const MAP: Record<Status, string> = {
   degraded:  'bg-warning-bg text-warning',
   past_due:  'bg-warning-bg text-warning',
   down:      'bg-danger-bg text-danger',
+  pending:   'bg-surface-container text-muted',
+  in_transit: 'bg-info-bg text-info',
+  delivered: 'bg-success-bg text-success',
+  delayed:   'bg-warning-bg text-warning',
+  idle:      'bg-surface-container text-muted',
+  in_maintenance: 'bg-warning-bg text-warning',
 };
 
 const LABELS: Record<Status, string> = {
@@ -21,6 +28,8 @@ const LABELS: Record<Status, string> = {
   healthy: 'Healthy', degraded: 'Degraded', down: 'Down',
   past_due: 'Past due', cancelled: 'Cancelled', trialing: 'Trialing',
   paused: 'Paused', invited: 'Invited',
+  pending: 'Pending', in_transit: 'In transit', delivered: 'Delivered',
+  delayed: 'Delayed', idle: 'Idle', in_maintenance: 'In maintenance',
 };
 
 export function StatusBadge({ status, className }: { status: Status; className?: string }) {
