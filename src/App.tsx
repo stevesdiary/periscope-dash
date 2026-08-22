@@ -15,6 +15,7 @@ import { AuditLogPage } from './pages/AuditLogPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AdminsPage } from './pages/AdminsPage';
 import { ForbiddenPage } from './pages/ErrorPages';
+import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import type { ReactNode } from 'react';
 
 function RequireAuth({ children }: { children: ReactNode }) {
