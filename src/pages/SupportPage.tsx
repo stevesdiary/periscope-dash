@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { UserCog, Link2, LogOut, Search, Copy, Check, AlertTriangle, ShieldCheck } from 'lucide-react';
 import { StatusBadge } from '../components/ui/StatusBadge';
-import { MOCK_USERS } from '../lib/mockData';
+import { mockUsers } from '../lib/mockData';
 import { api } from '../api/client';
 
-type UserRow = typeof MOCK_USERS[0];
+type UserRow = { id: string; name: string; email: string; business: string; businessId: string; applications: string[]; role: string; status: string; lastActive: string };
 
 function relativeTime(iso: string | null): string {
   if (!iso) return '—';
@@ -33,7 +33,7 @@ function CopyButton({ text }: { text: string }) {
 }
 
 export function SupportPage() {
-  const [users, setUsers] = useState<UserRow[]>(MOCK_USERS);
+  const [users, setUsers] = useState<UserRow[]>(mockUsers() ?? []);
   const [search, setSearch] = useState('');
 
   // Tool inputs

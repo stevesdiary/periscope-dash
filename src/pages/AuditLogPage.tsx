@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Search, Download, X, Copy, Check } from 'lucide-react';
-import { MOCK_AUDIT_LOG } from '../lib/mockData';
+import { mockAuditLog } from '../lib/mockData';
 import { api } from '../api/client';
 import { clsx } from 'clsx';
 
-type AuditRow = typeof MOCK_AUDIT_LOG[0];
+type AuditRow = { id: string; time: string; actor: string; actorRole: string; action: string; target: string; correlationId: string; result: string };
 
 const ACTION_COLORS: Record<string, string> = {
   'totp.disable': 'bg-warning-bg text-warning',
@@ -25,7 +25,7 @@ export function AuditLogPage() {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<AuditRow | null>(null);
   const [copied, setCopied] = useState(false);
-  const [entries, setEntries] = useState<AuditRow[]>(MOCK_AUDIT_LOG);
+  const [entries, setEntries] = useState<AuditRow[]>(mockAuditLog() ?? []);
 
   useEffect(() => {
     api.getAudit({ limit: 100 })

@@ -3,7 +3,7 @@ import { Download, TrendingUp, TrendingDown } from 'lucide-react';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { AppTag } from '../components/ui/AppTag';
-import { MOCK_MRR_TREND, MOCK_SUBSCRIPTIONS } from '../lib/mockData';
+import { mockMrrTrend, mockSubscriptions } from '../lib/mockData';
 import { api } from '../api/client';
 import { PRODUCT_COLORS } from '../types';
 import type { SubscriptionRecord, MetricSnapshot } from '../types';
@@ -65,9 +65,9 @@ type SubFilter = 'all' | 'active' | 'past_due' | 'cancelled' | 'trialing';
 export function RevenuePage() {
   const [range, setRange] = useState<Range>('30d');
   const [subFilter, setSubFilter] = useState<SubFilter>('all');
-  const [allSubs, setAllSubs] = useState<SubscriptionRecord[]>(MOCK_SUBSCRIPTIONS);
+  const [allSubs, setAllSubs] = useState<SubscriptionRecord[]>(mockSubscriptions() ?? []);
   const [kpi, setKpi] = useState<{ mrr: number; arr: number; failed: number } | null>(null);
-  const [mrrTrend, setMrrTrend] = useState<Record<string, string | number>[]>(MOCK_MRR_TREND);
+  const [mrrTrend, setMrrTrend] = useState<Record<string, string | number>[]>(mockMrrTrend() ?? []);
   const [planData, setPlanData] = useState(PLAN_DATA);
   const [failedPayments, setFailedPayments] = useState<FailedPaymentRow[]>(FAILED_PAYMENTS);
 

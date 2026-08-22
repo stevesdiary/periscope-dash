@@ -2,13 +2,13 @@ import { useState, useEffect } from 'react';
 import { Search, X, Mail, Building2 } from 'lucide-react';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { AppTag } from '../components/ui/AppTag';
-import { MOCK_USERS } from '../lib/mockData';
+import { mockUsers } from '../lib/mockData';
 import { api } from '../api/client';
 import { clsx } from 'clsx';
 
-type AppFilter = 'all' | 'estate' | 'school' | 'hospital' | 'logistics' | 'esusu';
+type AppFilter = 'all' | 'estate' | 'school' | 'hospital' | 'logistics';
 type StatusFilter = 'all' | 'active' | 'invited' | 'inactive';
-type UserRow = typeof MOCK_USERS[0];
+type UserRow = { id: string; name: string; email: string; business: string; businessId: string; applications: string[]; role: string; status: string; lastActive: string };
 
 function initials(name: string) {
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
@@ -30,7 +30,7 @@ export function UsersPage() {
   const [appFilter, setAppFilter] = useState<AppFilter>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [selected, setSelected] = useState<UserRow | null>(null);
-  const [users, setUsers] = useState<UserRow[]>(MOCK_USERS);
+  const [users, setUsers] = useState<UserRow[]>(mockUsers() ?? []);
 
   useEffect(() => {
     api.getUsers()
@@ -75,7 +75,7 @@ export function UsersPage() {
         <select value={appFilter} onChange={e => setAppFilter(e.target.value as AppFilter)}
           className="h-8 px-3 rounded-lg border border-outline bg-white text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20">
           <option value="all">All products</option>
-          {['estate', 'school', 'hospital', 'logistics', 'esusu'].map(a => (
+          {['estate', 'school', 'hospital', 'logistics'].map(a => (
             <option key={a} value={a}>{a.charAt(0).toUpperCase() + a.slice(1)}</option>
           ))}
         </select>

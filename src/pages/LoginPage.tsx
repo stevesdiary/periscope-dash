@@ -63,10 +63,10 @@ export function LoginPage() {
             One command center for the whole portfolio
           </h1>
           <p className="text-base text-on-surface-variant mb-8">
-            Revenue, businesses, users, health — across Estate, School, Hospital, Logistics and esusu — aggregated into one internal dashboard.
+            Revenue, businesses, users, health — across Estate, School, Hospital and Logistics — aggregated into one internal dashboard.
           </p>
           <div className="flex items-center gap-3">
-            {['Estate', 'School', 'Hospital', 'Logistics', 'esusu'].map((p) => (
+            {['Estate', 'School', 'Hospital', 'Logistics'].map((p) => (
               <span key={p} className="px-3 py-1 rounded-full text-xs font-medium bg-white border border-outline text-on-surface-variant shadow-card">
                 {p}
               </span>

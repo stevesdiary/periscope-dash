@@ -5,7 +5,7 @@ import { KpiCard } from '../components/ui/KpiCard';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { SkeletonCard } from '../components/ui/Skeleton';
 import { api } from '../api/client';
-import { MOCK_DASHBOARD, MOCK_MRR_TREND } from '../lib/mockData';
+import { mockDashboard, mockMrrTrend } from '../lib/mockData';
 import { PRODUCT_COLORS } from '../types';
 import type { ExecutiveDashboard } from '../types';
 import { clsx } from 'clsx';
@@ -29,7 +29,7 @@ export function DashboardPage() {
       const res = await api.getDashboard();
       setData(res);
     } catch {
-      setData(MOCK_DASHBOARD); // fallback to mock
+      setData(mockDashboard()); // fallback to mock
     } finally {
       setLoading(false);
     }
@@ -37,8 +37,8 @@ export function DashboardPage() {
 
   useEffect(() => { load(); }, []);
 
-  const kpis = data?.kpis ?? MOCK_DASHBOARD.kpis;
-  const apps = data?.applications ?? MOCK_DASHBOARD.applications;
+  const kpis = data?.kpis ?? mockDashboard()?.kpis ?? { applications: 0, businesses: 0, activeBusinesses: 0, users: 0, mrr: 0, arr: 0, monthlyRevenue: 0, activeSubscriptions: 0, failedPayments: 0, todaySignups: 0, todayRevenue: 0, systemHealth: 'healthy' as const, avgResponseTimeMs: 0 };
+  const apps = data?.applications ?? mockDashboard()?.applications ?? [];
 
   return (
     <div className="p-6 space-y-6 max-w-[1400px] mx-auto">
@@ -109,7 +109,7 @@ export function DashboardPage() {
         <h2 className="text-base font-semibold text-on-surface mb-4">Monthly recurring revenue</h2>
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={MOCK_MRR_TREND} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+            <AreaChart data={mockMrrTrend() ?? []} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
               <defs>
                 {Object.entries(PRODUCT_COLORS).map(([key, color]) => (
                   <linearGradient key={key} id={`grad-${key}`} x1="0" y1="0" x2="0" y2="1">

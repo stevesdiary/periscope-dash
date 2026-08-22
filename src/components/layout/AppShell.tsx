@@ -7,10 +7,10 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useAuth } from '../../hooks/useAuth';
-import { MOCK_NOTIFICATIONS } from '../../lib/mockData';
+import { mockNotifications } from '../../lib/mockData';
 import { api } from '../../api/client';
 
-type NotifItem = typeof MOCK_NOTIFICATIONS[0];
+type NotifItem = { id: string; category: string; title: string; detail: string; time: string; read: boolean };
 
 function notifRelative(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -86,7 +86,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   const [searchVal, setSearchVal] = useState('');
   const notifRef = useRef<HTMLDivElement>(null);
   const userRef = useRef<HTMLDivElement>(null);
-  const [notifications, setNotifications] = useState<NotifItem[]>(MOCK_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<NotifItem[]>(mockNotifications() ?? []);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Check, Minus, UserPlus, MoreHorizontal, Shield } from 'lucide-react';
-import { MOCK_ADMINS, PERMISSIONS_MATRIX } from '../lib/mockData';
+import { mockAdmins, PERMISSIONS_MATRIX } from '../lib/mockData';
 import { StatusBadge } from '../components/ui/StatusBadge';
 import { clsx } from 'clsx';
 
@@ -53,7 +53,7 @@ export function AdminsPage() {
               </tr>
             </thead>
             <tbody>
-              {MOCK_ADMINS.map(admin => (
+              {(mockAdmins() ?? []).map(admin => (
                 <tr key={admin.id} className="table-row">
                   <td className="table-cell">
                     <div className="flex items-center gap-2.5">

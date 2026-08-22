@@ -5,7 +5,7 @@ import { StatusBadge } from '../components/ui/StatusBadge';
 import { AppTag } from '../components/ui/AppTag';
 import { SkeletonTable } from '../components/ui/Skeleton';
 import { api } from '../api/client';
-import { MOCK_BUSINESSES } from '../lib/mockData';
+import { mockBusinesses } from '../lib/mockData';
 import type { BusinessListItem } from '../types';
 import { clsx } from 'clsx';
 
@@ -30,7 +30,7 @@ export function BusinessesPage() {
   useEffect(() => {
     api.getBusinesses()
       .then(setBusinesses)
-      .catch(() => setBusinesses(MOCK_BUSINESSES))
+      .catch(() => setBusinesses(mockBusinesses() ?? []))
       .finally(() => setLoading(false));
   }, []);
 
@@ -93,7 +93,7 @@ export function BusinessesPage() {
         <select value={appFilter} onChange={e => { setAppFilter(e.target.value); setPage(1); }}
           className="h-8 px-3 rounded-lg border border-outline bg-white text-sm text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/20">
           <option value="all">All products</option>
-          {['estate', 'school', 'hospital', 'logistics', 'esusu'].map(a => (
+          {['estate', 'school', 'hospital', 'logistics'].map(a => (
             <option key={a} value={a}>{a.charAt(0).toUpperCase() + a.slice(1)}</option>
           ))}
         </select>

@@ -43,7 +43,8 @@ export default function App() {
     <BrowserRouter>
       <AuthProvider>
         <ToastProvider>
-          <Routes>
+          <ErrorBoundary>
+            <Routes>
             {/* Public */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/login/totp" element={<TotpLoginPage />} />
@@ -128,6 +129,7 @@ export default function App() {
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
+          </ErrorBoundary>
         </ToastProvider>
       </AuthProvider>
     </BrowserRouter>

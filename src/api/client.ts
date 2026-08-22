@@ -51,6 +51,12 @@ export const api = {
   totpDisable: (code: string) =>
     request<{ disabled: boolean }>('/auth/totp/disable', { method: 'POST', body: JSON.stringify({ code }) }),
 
+  changePassword: (currentPassword: string, newPassword: string) =>
+    request<{ changed: boolean }>('/auth/change-password', {
+      method: 'POST',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    }),
+
   // ---- Dashboard ----
   getDashboard: () => request<ExecutiveDashboard>('/internal/dashboard'),
   getDashboardHistory: (params: { from?: string; to?: string; limit?: number } = {}) =>

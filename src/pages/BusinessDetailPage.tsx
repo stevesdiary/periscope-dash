@@ -6,7 +6,7 @@ import { StatusBadge } from '../components/ui/StatusBadge';
 import { AppTag } from '../components/ui/AppTag';
 import { Skeleton } from '../components/ui/Skeleton';
 import { api } from '../api/client';
-import { MOCK_BUSINESS_DETAIL, MOCK_BUSINESSES } from '../lib/mockData';
+import { mockBusinessDetail, mockBusinesses } from '../lib/mockData';
 import { PRODUCT_COLORS } from '../types';
 import type { BusinessDetail } from '../types';
 
@@ -31,9 +31,11 @@ export function BusinessDetailPage() {
           setNotFound(true);
         } else {
           // fallback to mock
-          const mock = MOCK_BUSINESSES.find(b => b.id === id);
+          const businesses = mockBusinesses();
+          const mock = businesses?.find(b => b.id === id);
+          const detail = mockBusinessDetail();
           if (mock) {
-            setData(id === 'biz-cedarpark' ? MOCK_BUSINESS_DETAIL : { ...mock, applicationUsage: mock.applications.map(k => ({ key: k, name: k, status: mock.status, plan: 'Growth', mrr: mock.mrr, users: mock.users, createdAt: '2025-11-02T09:00:00.000Z' })) });
+            setData(id === 'biz-cedarpark' && detail ? detail : { ...mock, applicationUsage: mock.applications.map(k => ({ key: k, name: k, status: mock.status, plan: 'Growth', mrr: mock.mrr, users: mock.users, createdAt: '2025-11-02T09:00:00.000Z' })) });
           } else {
             setNotFound(true);
           }
