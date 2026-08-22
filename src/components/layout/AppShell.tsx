@@ -3,7 +3,7 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Building2, DollarSign, CreditCard, Users, HeadphonesIcon,
   Activity, ScrollText, Settings, Bell, Search, ChevronDown, LogOut,
-  Menu, Aperture
+  Menu, Aperture, Truck
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useAuth } from '../../hooks/useAuth';
@@ -30,6 +30,7 @@ const NAV = [
     { to: '/businesses', label: 'Businesses', icon: Building2, permission: null },
     { to: '/revenue', label: 'Revenue', icon: DollarSign, permission: 'billing.read' },
     { to: '/subscriptions', label: 'Subscriptions', icon: CreditCard, permission: 'subscription.read' },
+    { to: '/logistics', label: 'Logistics', icon: Truck, permission: 'system.read' },
     { to: '/users', label: 'Users', icon: Users, permission: 'user.read' },
   ]},
   { group: 'OPERATIONS', items: [

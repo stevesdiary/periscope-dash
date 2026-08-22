@@ -31,7 +31,8 @@ const SERVICES: Service[] = [
   { key: 'estate', name: 'Estate', status: 'healthy', uptime: '99.95%', latency: 142, errorRate: '0.2%', failedPayments: 3 },
   { key: 'logistics', name: 'Logistics', status: 'healthy', uptime: '99.97%', latency: 148, errorRate: '0.1%', failedPayments: 5 },
   { key: 'school', name: 'School', status: 'healthy', uptime: '99.99%', latency: 130, errorRate: '0.0%', failedPayments: null },
-  { key: 'hospital', name: 'Hospital', status: 'degraded', uptime: '99.90%', latency: 210, errorRate: '0.3%', failedPayments: 2 },
+  { key: 'hospitality', name: 'Hospitality', status: 'healthy', uptime: '99.90%', latency: 121, errorRate: '0.3%', failedPayments: null },
+  { key: 'hospital', name: 'Hospital', status: 'down', uptime: '—', latency: null, errorRate: '—', failedPayments: null, lastSeen: '6m ago' },
 ];
 
 const ALERTS = [

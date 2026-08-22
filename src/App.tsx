@@ -8,6 +8,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { BusinessesPage } from './pages/BusinessesPage';
 import { BusinessDetailPage } from './pages/BusinessDetailPage';
 import { RevenuePage } from './pages/RevenuePage';
+import { LogisticsPage } from './pages/LogisticsPage';
 import { UsersPage } from './pages/UsersPage';
 import { SupportPage } from './pages/SupportPage';
 import { SystemHealthPage } from './pages/SystemHealthPage';
@@ -78,6 +79,14 @@ export default function App() {
               <ProtectedShell>
                 <RequirePermission permission="subscription.read">
                   <RevenuePage />
+                </RequirePermission>
+              </ProtectedShell>
+            } />
+
+            <Route path="/logistics" element={
+              <ProtectedShell>
+                <RequirePermission permission="system.read">
+                  <LogisticsPage />
                 </RequirePermission>
               </ProtectedShell>
             } />
